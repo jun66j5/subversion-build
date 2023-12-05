@@ -1,0 +1,5 @@
+zlib
+expat
+pcre
+openssl
+gettext

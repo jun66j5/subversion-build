@@ -1,0 +1,246 @@
+---
+name: Run tests on macOS
+
+on:
+  workflow_call:
+    inputs:
+      subversion-repository: {required: true, type: string}
+      subversion-ref: {required: true, type: string}
+      py3c-ref: {required: true, type: string}
+
+jobs:
+
+  swig-py:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12]
+        python-version: ['3.12']
+
+    needs: prepare
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+      MATRIX_PYVER: ${{ matrix.python-version }}
+
+    steps:
+    - name: Set up libraries
+      uses: actions/cache@v3
+      with:
+        path: ~/svn
+        key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - name: Checkout py3c
+      uses: actions/checkout@v4
+      with:
+        repository: encukou/py3c
+        ref: ${{ inputs.py3c-ref }}
+        path: py3c
+
+    - run: .github/build.sh swig-py
+
+
+  swig-rb:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12]
+        ruby-version: ['3.2', '2.4']
+
+    needs: prepare
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+
+    steps:
+    - name: Set up libraries
+      uses: actions/cache@v3
+      with:
+        path: ~/svn
+        key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Set up Ruby ${{ matrix.ruby-version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - run: .github/build.sh swig-rb
+
+
+  swig-pl:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12]
+        # perl-version: ['5.34', '5.22']
+
+    needs: prepare
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+
+    steps:
+    - name: Set up libraries
+      uses: actions/cache@v3
+      with:
+        path: ~/svn
+        key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    # Use brew perl bacuase check-swig-pl fails with shogo82148's perl
+    #
+    # - name: Set up Perl ${{ matrix.perl-version }}
+    #   uses: shogo82148/actions-setup-perl@v1
+    #   with:
+    #     perl-version: ${{ matrix.perl-version }}
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - run: .github/build.sh swig-pl
+
+
+  javahl:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12]
+        java-version: ['17', '8']
+
+    needs: prepare
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+
+    steps:
+    - name: Set up libraries
+      uses: actions/cache@v3
+      with:
+        path: ~/svn
+        key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Set up Java ${{ matrix.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: adopt
+        java-version: ${{ matrix.java-version }}
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - run: .github/build.sh javahl
+
+
+  core:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12]
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+
+    steps:
+    - name: Set up libraries
+      uses: actions/cache@v3
+      with:
+        path: ~/svn
+        key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - run: .github/build.sh all
+
+    - name: Upload log files
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: log-core-${{ matrix.os }}
+        path: 'subversion/*.log'
+
+
+  prepare:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-12]
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+
+    steps:
+    - name: Set up libraries
+      uses: actions/cache@v3
+      with:
+        path: ~/svn
+        key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - run: .github/build.sh install

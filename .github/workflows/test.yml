@@ -1,0 +1,84 @@
+---
+name: Run tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test-ubuntu:
+        description: 'Run tests on Ubuntu'
+        required: false
+        type: boolean
+        default: false
+      test-macos:
+        description: 'Run tests on macOS'
+        required: false
+        type: boolean
+        default: false
+      test-windows:
+        description: 'Run tests on Windows'
+        required: false
+        type: boolean
+        default: false
+      subversion-repository:
+        required: true
+        default: apache/subversion
+      subversion-ref:
+        required: true
+        default: 'trunk'
+      py3c-ref:
+        required: true
+        default: 'v1.4'
+      apr-ref:
+        required: true
+        default: '1.7.4'
+      apr-util-ref:
+        required: true
+        default: '1.6.3'
+      httpd-ref:
+        required: true
+        default: '2.4.57'
+      serf-ref:
+        required: true
+        default: '1.3.10'
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        {
+          echo '### Inputs:'
+          echo '```json'
+          echo "$INPUTS"
+          echo '```'
+        } >>"$GITHUB_STEP_SUMMARY"
+      env:
+        INPUTS: ${{ toJSON(github.event.inputs) }}
+
+  test-ubuntu:
+    if: ${{ inputs.test-ubuntu }}
+    uses: ./.github/workflows/test-ubuntu.yml
+    with:
+      subversion-repository: ${{ inputs.subversion-repository }}
+      subversion-ref: ${{ inputs.subversion-ref }}
+      py3c-ref: ${{ inputs.py3c-ref }}
+
+  test-macos:
+    if: ${{ inputs.test-macos }}
+    uses: ./.github/workflows/test-macos.yml
+    with:
+      subversion-repository: ${{ inputs.subversion-repository }}
+      subversion-ref: ${{ inputs.subversion-ref }}
+      py3c-ref: ${{ inputs.py3c-ref }}
+
+  test-windows:
+    if: ${{ inputs.test-windows }}
+    uses: ./.github/workflows/test-windows.yml
+    with:
+      subversion-repository: ${{ inputs.subversion-repository }}
+      subversion-ref: ${{ inputs.subversion-ref }}
+      py3c-ref: ${{ inputs.py3c-ref }}
+      apr-ref: ${{ inputs.apr-ref }}
+      apr-util-ref: ${{ inputs.apr-util-ref }}
+      httpd-ref: ${{ inputs.httpd-ref }}
+      serf-ref: ${{ inputs.serf-ref }}

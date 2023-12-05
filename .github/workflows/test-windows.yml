@@ -1,0 +1,245 @@
+---
+name: Run tests on Windows
+
+on:
+  workflow_call:
+    inputs:
+      subversion-repository: {required: true, type: string}
+      subversion-ref: {required: true, type: string}
+      py3c-ref: {required: true, type: string}
+      apr-ref: {required: true, type: string}
+      apr-util-ref: {required: true, type: string}
+      httpd-ref: {required: true, type: string}
+      serf-ref: {required: true, type: string}
+
+jobs:
+
+  core:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022]
+
+    needs: prepare
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+    - name: Use LF for git checkout
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - name: Set up vcpkg cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~\AppData\Local\vcpkg\archives
+          ~\AppData\Local\vcpkg\downloads\7z*
+        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Set up dependencies cache
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\deps
+        key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.3.1
+
+    - run: .github\build.ps1 core
+
+    - name: Upload log files
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: log-${{ matrix.os }}-core
+        path: |
+          subversion\*.log
+          subversion\Release\*.log
+
+
+  bindings:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022]
+        python-version: ['3.x']
+        perl-version: ['5']
+        java-version: ['17']
+
+    needs: prepare
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+    - name: Use LF for git checkout
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - name: Set up vcpkg cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~\AppData\Local\vcpkg\archives
+          ~\AppData\Local\vcpkg\downloads\7z*
+        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Set up dependencies cache
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\deps
+        key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up Perl ${{ matrix.perl-version }}
+      uses: shogo82148/actions-setup-perl@v1
+      with:
+        perl-version: ${{ matrix.perl-version }}
+
+    - name: Set up Java ${{ matrix.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: adopt
+        java-version: ${{ matrix.java-version }}
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.3.1
+
+    - name: Checkout py3c
+      uses: actions/checkout@v4
+      with:
+        repository: encukou/py3c
+        ref: v1.4
+        path: py3c
+
+    - run: .github\build.ps1 bindings
+
+    - name: Upload log files
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: log-${{ matrix.os }}-bindings
+        path: |
+          subversion\*.log
+
+
+  prepare:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-2022]
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+    - name: Use LF for git checkout
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Checkout subversion
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.subversion-repository }}
+        ref: ${{ inputs.subversion-ref }}
+        path: subversion
+
+    - name: Set up vcpkg cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~\AppData\Local\vcpkg\archives
+          ~\AppData\Local\vcpkg\downloads\7z*
+        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+        restore-keys: |
+          ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+          ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-
+
+    - name: Set up dependencies cache
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\deps
+        key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
+
+    - name: Set up Python 3
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Checkout apr
+      uses: actions/checkout@v4
+      with:
+        repository: apache/apr
+        ref: ${{ inputs.apr-ref }}
+        path: deps/apr
+
+    - name: Checkout apr-util
+      uses: actions/checkout@v4
+      with:
+        repository: apache/apr-util
+        ref: ${{ inputs.apr-util-ref }}
+        path: deps/apr-util
+
+    - name: Checkout httpd
+      uses: actions/checkout@v4
+      with:
+        repository: apache/httpd
+        ref: ${{ inputs.httpd-ref }}
+        path: deps/httpd
+
+    - name: Checkout serf
+      uses: actions/checkout@v4
+      with:
+        repository: apache/serf
+        ref: ${{ inputs.serf-ref }}
+        path: deps/serf
+
+    - run: .github\build.ps1 prepare
+
+    - name: Upload log files
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: log-${{ matrix.os }}-prepare
+        path: |
+          deps\*\*.log
