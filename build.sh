@@ -3,14 +3,33 @@
 set -exo pipefail
 
 target="$1"
+workspace="$GITHUB_WORKSPACE"
+prefix="$HOME/svn"
 with_swig=
 
-cd "$GITHUB_WORKSPACE/subversion"
+sed_repl() {
+    local orig="$1"
+    local new="$orig.new~"
+    shift
+    sed "$@" "$orig" >"$new" && mv "$new" "$orig"
+}
+
+if [ -n "$INPUT_SVNARC" ]; then
+    use_tarball=y
+    test -d "$prefix/arc" || mkdir -p "$prefix/arc"
+    arc="$prefix/arc/${INPUT_SVNARC##*/}"
+    test -f "$arc" || curl -L -o "$arc" "$INPUT_SVNARC"
+    tar xjf "$arc" -C "$workspace"
+    mv "$workspace/subversion"-*.*.* "$workspace/subversion"
+else
+    use_tarball=n
+fi
+cd "$workspace/subversion"
 
 case "$MATRIX_OS" in
 ubuntu-*)
     pkgs="build-essential libtool libtool-bin libapr1-dev libaprutil1-dev
-          libsqlite3-dev liblz4-dev libutf8proc-dev"
+          libsqlite3-dev liblz4-dev libutf8proc-dev libserf-dev"
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
@@ -26,13 +45,15 @@ ubuntu-*)
         swig=
         ;;
     esac
-    test -n "$swig" && pkgs="$pkgs $swig"
+    if [ "$use_tarball" = n -a -n "$swig" ]; then
+        pkgs="$pkgs $swig"
+        with_swig="/usr/bin/$swig"
+    fi
     sudo apt-get update -qq
     sudo apt-get install -qq -y $pkgs
     sudo apt-get purge -qq -y subversion libsvn-dev
     with_apr=/usr/bin/apr-1-config
     with_apr_util=/usr/bin/apu-1-config
-    test -n "$swig" && with_swig="/usr/bin/$swig"
     with_apxs=/usr/bin/apxs2
     with_sqlite=/usr
     parallel=3
@@ -54,24 +75,26 @@ macos-*)
         swig=
         ;;
     esac
-    test -n "$swig" && pkgs="$pkgs $swig"
+    if [ "$use_tarball" = n -a -n "$swig" ]; then
+        pkgs="$pkgs $swig"
+        with_swig="$(brew --prefix "$swig")/bin/swig"
+    fi
     brew update
     brew outdated $pkgs || brew upgrade $pkgs || :
     brew install $pkgs
     brew uninstall subversion || :
     with_apr="$(brew --prefix apr)/bin/apr-1-config"
     with_apr_util="$(brew --prefix apr-util)/bin/apu-1-config"
-    test -n "$swig" && with_swig="$(brew --prefix "$swig")/bin/swig"
     with_apxs="$(brew --prefix httpd)/bin/apxs"
     with_sqlite="$(brew --prefix sqlite)"
     parallel=4
     ;;
 *)
-    echo "Unsupported $MATRIX_OS"
+    echo "Unsupported $MATRIX_OS" 1>&2
+    exit 1
     ;;
 esac
 
-prefix="$HOME/svn"
 test -d "$prefix/lib" || mkdir -p "$prefix/lib"
 cflags=
 if [ "$target" = install ]; then
@@ -91,7 +114,13 @@ else
     opt_swig_perl="PERL=none"
     opt_swig_ruby="RUBY=none"
 fi
-opt_swig="--without-swig"
+if [ "$use_tarball" = y ]; then
+    opt_swig=
+elif [ -n "$with_swig" ]; then
+    opt_swig="--with-swig=$with_swig"
+else
+    opt_swig='--without-swig'
+fi
 opt_py3c="--without-py3c"
 opt_apxs="--without-apxs"
 opt_javahl="--disable-javahl"
@@ -100,18 +129,16 @@ opt_junit="--without-junit"
 
 case "$target" in
 swig-py)
-    opt_swig="--with-swig=$with_swig"
     if [ "$has_opt_swig_lang" = y ]; then
         opt_swig_python="--with-swig-python=python"
     else
         opt_swig_python="PYTHON=python"
     fi
-    opt_py3c="--with-py3c=$GITHUB_WORKSPACE/py3c"
+    opt_py3c="--with-py3c=$workspace/py3c"
     use_installed_libs=y
     ;;
 swig-rb)
-    opt_swig="--with-swig=$with_swig"
-    if [ "$has_opt_swig_lang" -eq 1 ]; then
+    if [ "$has_opt_swig_lang" = y ]; then
         opt_swig_ruby="--with-swig-ruby=ruby"
     else
         opt_swig_ruby="RUBY=ruby"
@@ -119,21 +146,21 @@ swig-rb)
     use_installed_libs=y
     case "$MATRIX_OS" in
     macos-*)
-        cflags="$cflags -fdeclspec"
+        cflags="$cflags -fdeclspec -Wno-unused-but-set-variable"
         ldflags="$ldflags -L$(ruby -rrbconfig -W0 -e "print RbConfig::CONFIG['libdir']")"
         ;;
     esac
     ;;
 swig-pl)
-    opt_swig="--with-swig=$with_swig"
-    if [ "$has_opt_swig_lang" -eq 1 ]; then
+    if [ "$has_opt_swig_lang" = y ]; then
         opt_swig_perl="--with-swig-perl=perl"
     else
         opt_swig_perl="PERL=perl"
     fi
     use_installed_libs=y
     cflags="$cflags -Wno-compound-token-split-by-macro"
-    git apply "$GITHUB_WORKSPACE/.github/swig-pl-installed-libs.diff"
+    sed_repl subversion/bindings/swig/perl/native/Makefile.PL.in \
+             -e "s#^my @ldpaths = (#&'@prefix@/lib', #"
     ;;
 javahl)
     opt_javahl="--enable-javahl"
@@ -147,8 +174,10 @@ all|install)
     ;;
 esac
 
-mkdir -p subversion/bindings/swig/proxy || :
-/bin/sh autogen.sh
+if [ ! -f configure ]; then
+    mkdir -p subversion/bindings/swig/proxy || :
+    /bin/sh autogen.sh
+fi
 
 if [ "$use_installed_libs" = y ]; then
     PATH="$prefix/bin:$PATH"
@@ -165,7 +194,7 @@ fi
 
 ./configure --prefix="$prefix" \
             --with-apr="$with_apr" --with-apr-util="$with_apr_util" \
-            --with-sqlite="$with_sqlite" "$opt_swig" "$opt_py3c" "$opt_apxs" \
+            --with-sqlite="$with_sqlite" $opt_swig "$opt_py3c" "$opt_apxs" \
             "$opt_javahl" "$opt_jdk" "$opt_junit" \
             --without-doxygen --without-berkeley-db --without-gpg-agent \
             --without-gnome-keyring --without-kwallet \
@@ -181,30 +210,38 @@ install)
     ;;
 all)
     time make -j"$parallel" all
-    time make check PARALLEL="$parallel"
     case "$MATRIX_OS" in
     ubuntu-*)
-        make svnserveautocheck PARALLEL="$parallel"
-        make davautocheck APACHE_MPM=event PARALLEL="$parallel"
+        tasks='check svnserveautocheck davautocheck'
+        ;;
+    macos-*)
+        tasks='check svnserveautocheck'
         ;;
     esac
+    rc=0
+    for task in $tasks; do
+        time make $task PARALLEL="$parallel" APACHE_MPM=event || rc=1
+        for i in tests.log fails.log; do
+            test -f "$i" && mv -v "$i" "$task-$i"
+        done
+    done
+    exit $rc
     ;;
 swig-pl)
-    time make -j"$parallel" "$target"
-    time make check-"$target" TEST_VERBOSE=1
+    time make -j"$parallel" swig-pl
+    time make check-swig-pl TEST_VERBOSE=1
     ;;
 swig-py)
-    time make -j"$parallel" "$target"
-    sed -e 's#/tests/run_all\.py#& -v#' Makefile >Makefile.new \
-        && mv Makefile.new Makefile
-    time make check-"$target"
+    time make -j"$parallel" swig-py
+    sed_repl Makefile -e 's#/tests/run_all\.py#& -v#'
+    time make check-swig-py
     ;;
 swig-rb)
-    time make -j"$parallel" "$target"
-    time make check-"$target" SWIG_RB_TEST_VERBOSE=v
+    time make -j"$parallel" swig-rb
+    time make check-swig-rb SWIG_RB_TEST_VERBOSE=v
     ;;
 javahl)
-    time make javahl
-    time make check-javahl
+    time make javahl  # without -j option
+    time make check-all-javahl
     ;;
 esac
