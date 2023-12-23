@@ -1,3 +1,4 @@
+$svnarcurl = $Env:INPUT_SVNARC
 $LocalAppData = $Env:LocalAppData
 $ProgramData = $Env:ProgramData
 $workspace = $Env:GITHUB_WORKSPACE
@@ -5,26 +6,42 @@ $arch = 'x64'
 $pythonLocation = $Env:pythonLocation
 $vcpkg_root = $Env:VCPKG_INSTALLATION_ROOT
 $vcpkg_downloads = "$LocalAppData\vcpkg\downloads"
-$vcpkg_triplet = "$arch-windows"
+$vcpkg_triplet = "$arch-windows-release"
 $vcpkg_dir = "$vcpkg_root\installed\$vcpkg_triplet"
 $deps_prefix = "$LocalAppData\deps"
-$sqlite_name = 'sqlite-amalgamation-3380100'
-$sqlite_url = "https://www.sqlite.org/2022/$sqlite_name.zip"
-$sqlite_arc = "$workspace\$sqlite_name.zip"
+$sqlite_url = $Env:INPUT_SQLITE_ARC
+$sqlite_arc = ([uri]$sqlite_url).Segments[-1]
+$sqlite_name = $sqlite_arc -Replace '\.zip$', ''
+$sqlite_arc = "$workspace\$sqlite_arc"
 $java_home = $Env:JAVA_HOME
 $junit_url = 'https://search.maven.org/remotecontent?filepath=junit/junit/4.13.2/junit-4.13.2.jar'
 $junit_file = "$workspace\junit4.jar"
-$python = ($pythonLocation -eq $null) ? 'python.exe' : "$pythonLocation\python.exe"
+$python = $pythonLocation ? "$pythonLocation\python.exe" : 'python.exe'
 
+if ($svnarcurl) {
+    $svnarcurl = $svnarcurl -Replace '\.tar\.[a-z0-9]+$', '.zip'
+    $svnarcdir = "$workspace\deps\arc"
+    $svnarcfile = ([uri]$svnarcurl).Segments[-1]
+    $svnarcfile = "$svnarcdir\$svnarcfile"
+    New-Item -Force -ItemType Directory -Path $svnarcdir
+    Invoke-WebRequest -Uri $svnarcurl -OutFile $svnarcfile
+    Expand-Archive -LiteralPath $svnarcfile -DestinationPath $workspace
+    Rename-Item "$workspace\subversion-*.*.*" "$workspace\subversion"
+}
 Push-Location -LiteralPath "$workspace\subversion"
 
 New-Item -Force -ItemType Directory -Path $vcpkg_downloads
 Push-Location -LiteralPath $vcpkg_root
 & git fetch --depth=1 origin
 & git checkout origin/master
+Copy-Item -LiteralPath "triplets\$arch-windows.cmake" `
+          -Destination "triplets\$vcpkg_triplet.cmake"
+Add-Content -LiteralPath "triplets\$vcpkg_triplet.cmake" `
+            -Value 'set(VCPKG_BUILD_TYPE release)'
 Pop-Location
-$vcpkg_opts = @("--downloads-root=$vcpkg_downloads", "--triplet=$vcpkg_triplet")
-$vcpkg_targets = Get-Content -LiteralPath "$workspace\.github\vcpkg.txt"
+$vcpkg_opts = @("--downloads-root=$vcpkg_downloads",
+                "--triplet=$vcpkg_triplet")
+$vcpkg_targets = Get-Content -LiteralPath "$workspace\vcpkg.txt"
 & vcpkg $vcpkg_opts update
 & vcpkg $vcpkg_opts install $vcpkg_targets
 if ($LASTEXITCODE) {
@@ -154,8 +171,10 @@ switch -Exact ($args[0]) {
 Invoke-WebRequest -Uri $sqlite_url -OutFile $sqlite_arc
 Expand-Archive -LiteralPath $sqlite_arc -DestinationPath $workspace
 
-New-Item -Force -ItemType Directory -Path "subversion\bindings\swig\proxy"
-& svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
+if (!$svnarcurl) {
+    New-Item -Force -ItemType Directory -Path "subversion\bindings\swig\proxy"
+    & svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
+}
 & $python gen-make.py `
           --vsnet-version=2019 `
           --enable-nls `

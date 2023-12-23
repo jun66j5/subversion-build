@@ -4,23 +4,28 @@ name: Run tests on Windows
 on:
   workflow_call:
     inputs:
+      os: {required: true, type: string}
       subversion-repository: {required: true, type: string}
       subversion-ref: {required: true, type: string}
-      py3c-ref: {required: true, type: string}
-      apr-ref: {required: true, type: string}
-      apr-util-ref: {required: true, type: string}
-      httpd-ref: {required: true, type: string}
-      serf-ref: {required: true, type: string}
+      subversion-archive: {required: false, type: string}
+      sqlite-archive: {required: true, type: string}
+      dependencies: {required: true, type: string}
+
+env:
+  INPUT_SVNARC: ${{ inputs.subversion-archive }}
+  INPUT_SQLITE_ARC: ${{ inputs.sqlite-archive }}
 
 jobs:
 
   core:
     runs-on: ${{ matrix.os }}
 
+    timeout-minutes: 60
+
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022]
+        os: ${{ fromJson(inputs.os) }}
 
     needs: prepare
 
@@ -38,6 +43,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
+      if: ${{ !inputs.subversion-archive }}
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.subversion-repository }}
@@ -50,7 +56,7 @@ jobs:
         path: |
           ~\AppData\Local\vcpkg\archives
           ~\AppData\Local\vcpkg\downloads\7z*
-        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up dependencies cache
       uses: actions/cache@v3
@@ -61,7 +67,7 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.3.1
 
-    - run: .github\build.ps1 core
+    - run: .\build.ps1 core
 
     - name: Upload log files
       uses: actions/upload-artifact@v4
@@ -76,13 +82,15 @@ jobs:
   bindings:
     runs-on: ${{ matrix.os }}
 
+    timeout-minutes: 30
+
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022]
+        os: ${{ fromJson(inputs.os) }}
         python-version: ['3.x']
         perl-version: ['5']
-        java-version: ['17']
+        java-version: ['21']
 
     needs: prepare
 
@@ -100,6 +108,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
+      if: ${{ !inputs.subversion-archive }}
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.subversion-repository }}
@@ -112,7 +121,7 @@ jobs:
         path: |
           ~\AppData\Local\vcpkg\archives
           ~\AppData\Local\vcpkg\downloads\7z*
-        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up dependencies cache
       uses: actions/cache@v3
@@ -143,10 +152,10 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: encukou/py3c
-        ref: v1.4
+        ref: ${{ fromJson(inputs.dependencies).py3c }}
         path: py3c
 
-    - run: .github\build.ps1 bindings
+    - run: .\build.ps1 bindings
 
     - name: Upload log files
       uses: actions/upload-artifact@v4
@@ -160,9 +169,11 @@ jobs:
   prepare:
     runs-on: ${{ matrix.os }}
 
+    timeout-minutes: 60
+
     strategy:
       matrix:
-        os: [windows-2022]
+        os: ${{ fromJson(inputs.os) }}
 
     defaults:
       run:
@@ -178,6 +189,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
+      if: ${{ !inputs.subversion-archive }}
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.subversion-repository }}
@@ -190,10 +202,10 @@ jobs:
         path: |
           ~\AppData\Local\vcpkg\archives
           ~\AppData\Local\vcpkg\downloads\7z*
-        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
         restore-keys: |
-          ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
-          ${{ matrix.os }}--vcpkg-${{ hashFiles('.github/vcpkg.txt') }}-
+          ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
+          ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-
 
     - name: Set up dependencies cache
       uses: actions/cache@v3
@@ -210,36 +222,44 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: apache/apr
-        ref: ${{ inputs.apr-ref }}
+        ref: ${{ fromJson(inputs.dependencies).apr }}
         path: deps/apr
 
     - name: Checkout apr-util
       uses: actions/checkout@v4
       with:
         repository: apache/apr-util
-        ref: ${{ inputs.apr-util-ref }}
+        ref: ${{ fromJson(inputs.dependencies).apr-util }}
         path: deps/apr-util
 
     - name: Checkout httpd
       uses: actions/checkout@v4
       with:
         repository: apache/httpd
-        ref: ${{ inputs.httpd-ref }}
+        ref: ${{ fromJson(inputs.dependencies).httpd }}
         path: deps/httpd
 
     - name: Checkout serf
       uses: actions/checkout@v4
       with:
         repository: apache/serf
-        ref: ${{ inputs.serf-ref }}
+        ref: ${{ fromJson(inputs.dependencies).serf }}
         path: deps/serf
 
-    - run: .github\build.ps1 prepare
+    - run: .\build.ps1 prepare
 
     - name: Upload log files
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: log-${{ matrix.os }}-prepare
+        name: log-${{ matrix.os }}-prepare-deps
         path: |
-          deps\*\*.log
+          deps\**\*.log
+
+    - name: Upload vcpkg log files
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: log-${{ matrix.os }}-prepare-vcpkg
+        path: |
+          C:\vcpkg\buildtrees
