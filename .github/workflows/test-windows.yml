@@ -80,7 +80,9 @@ jobs:
 
 
   bindings:
-    if: ${{ contains(fromJson(inputs.targets), 'bindings') }}
+    if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
+            contains(fromJson(inputs.targets), 'swig-pl') ||
+            contains(fromJson(inputs.targets), 'javahl') }}
     runs-on: ${{ matrix.os }}
     needs: prepare
     timeout-minutes: 30
@@ -129,16 +131,19 @@ jobs:
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up Python ${{ matrix.python-version }}
+      if: ${{ contains(fromJson(inputs.targets), 'swig-py') }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up Perl ${{ matrix.perl-version }}
+      if: ${{ contains(fromJson(inputs.targets), 'swig-pl') }}
       uses: shogo82148/actions-setup-perl@v1
       with:
         perl-version: ${{ matrix.perl-version }}
 
     - name: Set up Java ${{ matrix.java-version }}
+      if: ${{ contains(fromJson(inputs.targets), 'javahl') }}
       uses: actions/setup-java@v4
       with:
         distribution: adopt
@@ -155,6 +160,8 @@ jobs:
         path: py3c
 
     - run: .\build.ps1 bindings
+      env:
+        INPUT_TARGETS: ${{ join(fromJson(inputs.targets), ' ') }}
 
     - name: Upload log files
       uses: actions/upload-artifact@v4
