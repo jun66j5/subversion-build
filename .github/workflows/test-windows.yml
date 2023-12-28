@@ -50,6 +50,15 @@ jobs:
         ref: ${{ inputs.subversion-ref }}
         path: subversion
 
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
+
     - name: Set up vcpkg cache
       uses: actions/cache@v3
       with:
@@ -115,6 +124,15 @@ jobs:
         repository: ${{ inputs.subversion-repository }}
         ref: ${{ inputs.subversion-ref }}
         path: subversion
+
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
 
     - name: Set up vcpkg cache
       uses: actions/cache@v3
@@ -200,6 +218,15 @@ jobs:
         repository: ${{ inputs.subversion-repository }}
         ref: ${{ inputs.subversion-ref }}
         path: subversion
+
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
 
     - name: Set up vcpkg cache
       uses: actions/cache@v3

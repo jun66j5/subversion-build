@@ -34,12 +34,14 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     outputs:
       ubuntu: ${{ steps.convert.outputs.ubuntu }}
       macos: ${{ steps.convert.outputs.macos }}
       windows: ${{ steps.convert.outputs.windows }}
       targets: ${{ steps.convert.outputs.targets }}
       dependencies: ${{ steps.convert.outputs.dependencies }}
+
     steps:
       - name: Show inputs
         env:
@@ -52,6 +54,7 @@ jobs:
             echo "$INPUTS"
             echo '```'
           } >>"$GITHUB_STEP_SUMMARY"
+
       - name: Convert inputs to json outputs
         id: convert
         env:
@@ -97,6 +100,27 @@ jobs:
             cat "$GITHUB_OUTPUT"
             echo '```'
           } >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Set up archives cache
+        if: ${{ inputs.subversion-archive }}
+        uses: actions/cache@v3
+        with:
+          path: arc
+          enableCrossOsArchive: true
+          key: arc--${{ inputs.subversion-archive }}
+          restore-keys: |
+            arc--${{ inputs.subversion-archive }}
+            arc--
+
+      - name: Download archives
+        if: ${{ inputs.subversion-archive }}
+        env:
+          INPUT_SVNARC: ${{ inputs.subversion-archive }}
+        run: |
+          set -ex
+          test -d arc || mkdir arc
+          wget -nv -N -P arc "$INPUT_SVNARC" "${INPUT_SVNARC%.tar.bz2}.zip"
+
 
   test-ubuntu:
     if: ${{ needs.setup.outputs.ubuntu != '[]' }}

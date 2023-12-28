@@ -20,9 +20,7 @@ sed_repl() {
 
 if [ -n "$INPUT_SVNARC" ]; then
     autogen=n
-    test -d "$prefix/arc" || mkdir -p "$prefix/arc"
-    arc="$prefix/arc/${INPUT_SVNARC##*/}"
-    test -f "$arc" || curl -L -o "$arc" "$INPUT_SVNARC"
+    arc="$workspace/arc/${INPUT_SVNARC##*/}"
     tar xjf "$arc" -C "$workspace"
     mv "$workspace/subversion"-*.*.* "$workspace/subversion"
 else

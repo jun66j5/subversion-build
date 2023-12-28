@@ -62,6 +62,15 @@ jobs:
         ref: ${{ fromJson(inputs.dependencies).py3c }}
         path: py3c
 
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
+
     - run: ./build.sh swig-py
 
 
@@ -102,6 +111,15 @@ jobs:
         repository: ${{ inputs.subversion-repository }}
         ref: ${{ inputs.subversion-ref }}
         path: subversion
+
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
 
     - run: ./build.sh swig-rb
 
@@ -146,6 +164,15 @@ jobs:
         ref: ${{ inputs.subversion-ref }}
         path: subversion
 
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
+
     - run: ./build.sh swig-pl
 
 
@@ -188,6 +215,15 @@ jobs:
         ref: ${{ inputs.subversion-ref }}
         path: subversion
 
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
+
     - run: ./build.sh javahl
 
 
@@ -221,6 +257,15 @@ jobs:
         repository: ${{ inputs.subversion-repository }}
         ref: ${{ inputs.subversion-ref }}
         path: subversion
+
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
 
     - run: ./build.sh all
 
@@ -261,5 +306,14 @@ jobs:
         repository: ${{ inputs.subversion-repository }}
         ref: ${{ inputs.subversion-ref }}
         path: subversion
+
+    - name: Set up archives cache
+      if: ${{ inputs.subversion-archive }}
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--${{ inputs.subversion-archive }}
 
     - run: ./build.sh install
