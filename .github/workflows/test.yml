@@ -4,24 +4,11 @@ name: Run tests
 on:
   workflow_dispatch:
     inputs:
-      ubuntu-version:
-        description: 'Run tests on Ubuntu'
-        required: false
-        type: choice
-        default: ''
-        options: ['', 'ubuntu-22.04', 'ubuntu-20.04']
-      macos-version:
-        description: 'Run tests on macOS'
-        required: false
-        type: choice
-        default: ''
-        options: ['', 'macos-13', 'macos-12', 'macos-11']
-      windows-version:
-        description: 'Run tests on Windows'
-        required: false
-        type: choice
-        default: ''
-        options: ['', 'windows-2022', 'windows-2019']
+      os:
+        description: 'Runs on'
+        required: true
+        type: string
+        default: 'ubuntu-22.04 macos-12 windows-2022'
       targets:
         description: 'Test targets'
         required: false
@@ -48,9 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
-      ubuntu-version: ${{ steps.convert.outputs.ubuntu-version }}
-      macos-version: ${{ steps.convert.outputs.macos-version }}
-      windows-version: ${{ steps.convert.outputs.windows-version }}
+      ubuntu: ${{ steps.convert.outputs.ubuntu }}
+      macos: ${{ steps.convert.outputs.macos }}
+      windows: ${{ steps.convert.outputs.windows }}
       targets: ${{ steps.convert.outputs.targets }}
       dependencies: ${{ steps.convert.outputs.dependencies }}
     steps:
@@ -71,61 +58,77 @@ jobs:
           INPUTS: ${{ toJSON(inputs) }}
         run: |
           set -ex
+          os_json() {
+            local name="$1"
+            local value="$(
+              cat "$tmpfile" |
+              jq -Mc '.os | split(" ") | map(select(startswith("'"$name"'-")))'
+            )"
+            echo "$name=$value"
+          }
           words_json() {
             local name="$1"
             local value="$(
-              echo "$INPUTS" |
-              jq -Mc '."'"$name"'" | split(" ")'
+              cat "$tmpfile" |
+              jq -Mc '."'"$name"'" | split(" ") | map(select(.!=""))'
             )"
             echo "$name=$value"
           }
           pairs_json() {
             local name="$1"
             local value="$(
-              echo "$INPUTS" |
-              jq -Mc '."'"$name"'" | split(" ") | map(split("=") | {(.[0]): .[1]}) | add'
+              cat "$tmpfile" |
+              jq -Mc '."'"$name"'" | split(" ") | map(select(.!="") | split("=") | {(.[0]): .[1]}) | add'
             )"
             echo "$name=$value"
           }
+          tmpfile="$(mktemp)"
+          echo "$INPUTS" >"$tmpfile"
           {
-            words_json 'ubuntu-version'
-            words_json 'macos-version'
-            words_json 'windows-version'
+            os_json 'ubuntu'
+            os_json 'macos'
+            os_json 'windows'
             words_json 'targets'
             pairs_json 'dependencies'
           } >>"$GITHUB_OUTPUT"
+          {
+            echo '### Outputs:'
+            echo '```'
+            cat "$GITHUB_OUTPUT"
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
 
   test-ubuntu:
-    if: ${{ inputs.ubuntu-version }}
+    if: ${{ needs.setup.outputs.ubuntu != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-ubuntu.yml
     with:
       targets: ${{ needs.setup.outputs.targets }}
-      os: ${{ needs.setup.outputs.ubuntu-version }}
+      os: ${{ needs.setup.outputs.ubuntu }}
       subversion-repository: ${{ inputs.subversion-repository }}
       subversion-ref: ${{ inputs.subversion-ref }}
       subversion-archive: ${{ inputs.subversion-archive }}
       dependencies: ${{ needs.setup.outputs.dependencies }}
 
   test-macos:
-    if: ${{ inputs.macos-version }}
+    if: ${{ needs.setup.outputs.macos != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-macos.yml
     with:
       targets: ${{ needs.setup.outputs.targets }}
-      os: ${{ needs.setup.outputs.macos-version }}
+      os: ${{ needs.setup.outputs.macos }}
       subversion-repository: ${{ inputs.subversion-repository }}
       subversion-ref: ${{ inputs.subversion-ref }}
       subversion-archive: ${{ inputs.subversion-archive }}
       dependencies: ${{ needs.setup.outputs.dependencies }}
 
   test-windows:
-    if: ${{ inputs.windows-version }}
+    if: ${{ needs.setup.outputs.windows != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-windows.yml
     with:
       targets: ${{ needs.setup.outputs.targets }}
-      os: ${{ needs.setup.outputs.windows-version }}
+      os: ${{ needs.setup.outputs.windows }}
       subversion-repository: ${{ inputs.subversion-repository }}
       subversion-ref: ${{ inputs.subversion-ref }}
       subversion-archive: ${{ inputs.subversion-archive }}
