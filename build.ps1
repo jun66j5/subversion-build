@@ -21,11 +21,9 @@ $python = $pythonLocation ? "$pythonLocation\python.exe" : 'python.exe'
 
 if ($svnarcurl) {
     $svnarcurl = $svnarcurl -Replace '\.tar\.[a-z0-9]+$', '.zip'
-    $svnarcdir = "$workspace\deps\arc"
+    $svnarcdir = "$workspace\arc"
     $svnarcfile = ([uri]$svnarcurl).Segments[-1]
     $svnarcfile = "$svnarcdir\$svnarcfile"
-    New-Item -Force -ItemType Directory -Path $svnarcdir
-    Invoke-WebRequest -Uri $svnarcurl -OutFile $svnarcfile
     Expand-Archive -LiteralPath $svnarcfile -DestinationPath $workspace
     Rename-Item "$workspace\subversion-*.*.*" "$workspace\subversion"
 }
