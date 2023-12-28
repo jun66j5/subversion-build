@@ -2,6 +2,7 @@ $svnarcurl = $Env:INPUT_SVNARC
 $LocalAppData = $Env:LocalAppData
 $ProgramData = $Env:ProgramData
 $workspace = $Env:GITHUB_WORKSPACE
+$input_targets = $Env:INPUT_TARGETS -Split ' '
 $arch = 'x64'
 $pythonLocation = $Env:pythonLocation
 $vcpkg_root = $Env:VCPKG_INSTALLATION_ROOT
@@ -159,12 +160,26 @@ switch -Exact ($args[0]) {
         $test_targets = @('--parallel')
     }
     'bindings' {
-        $genmake_opts = @("--with-py3c=$workspace\py3c",
-                          "--with-jdk=$java_home",
-                          "--with-junit=$junit_file")
-        $build_targets = '__ALL__;__SWIG_PYTHON__;__SWIG_PERL__;__JAVAHL__;__JAVAHL_TESTS__'
-        $test_targets = @('--swig=python', '--swig=perl', '--javahl')
-        Invoke-WebRequest -Uri $junit_url -OutFile $junit_file
+        $genmake_opts = @()
+        $build_targets = @('__ALL__')
+        $test_targets = @()
+        if ($input_targets -Contains 'swig-py') {
+            $genmake_opts += "--with-py3c=$workspace\py3c"
+            $build_targets += '__SWIG_PYTHON__'
+            $test_targets += '--swig=python'
+        }
+        if ($input_targets -Contains 'swig-pl') {
+            $build_targets += '__SWIG_PERL__'
+            $test_targets += '--swig=perl'
+        }
+        if ($input_targets -Contains 'javahl') {
+            $genmake_opts += @("--with-jdk=$java_home",
+                               "--with-junit=$junit_file")
+            $build_targets += @('__JAVAHL__', '__JAVAHL_TESTS__')
+            $test_targets += '--javahl'
+            Invoke-WebRequest -Uri $junit_url -OutFile $junit_file
+        }
+        $build_targets = $build_targets -Join ';'
     }
 }
 
