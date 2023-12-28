@@ -6,6 +6,10 @@ target="$1"
 workspace="$GITHUB_WORKSPACE"
 prefix="$HOME/svn"
 with_swig=
+swig_python=python
+swig_perl=perl
+swig_ruby=ruby
+clean_swig_py=n
 
 sed_repl() {
     local orig="$1"
@@ -15,14 +19,14 @@ sed_repl() {
 }
 
 if [ -n "$INPUT_SVNARC" ]; then
-    use_tarball=y
+    autogen=n
     test -d "$prefix/arc" || mkdir -p "$prefix/arc"
     arc="$prefix/arc/${INPUT_SVNARC##*/}"
     test -f "$arc" || curl -L -o "$arc" "$INPUT_SVNARC"
     tar xjf "$arc" -C "$workspace"
     mv "$workspace/subversion"-*.*.* "$workspace/subversion"
 else
-    use_tarball=n
+    autogen=y
 fi
 cd "$workspace/subversion"
 
@@ -33,8 +37,16 @@ ubuntu-*)
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
-            2|2.*)  swig=swig3.0 ;;
-            *)      swig=swig4.0 ;;
+        2|2.*)
+            pkgs="$pkgs python2.7-dev"
+            swig=swig3.0
+            swig_python=/usr/bin/python2.7
+            autogen=y
+            clean_swig_py=y
+            ;;
+        *)
+            swig=swig4.0
+            ;;
         esac
         ;;
     swig-*)
@@ -45,7 +57,7 @@ ubuntu-*)
         swig=
         ;;
     esac
-    if [ "$use_tarball" = n -a -n "$swig" ]; then
+    if [ -n "$swig" -a "$autogen" = y ]; then
         pkgs="$pkgs $swig"
         with_swig="/usr/bin/$swig"
     fi
@@ -63,9 +75,12 @@ macos-*)
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
-            2|2.*)  swig=swig@3 ;;
-            *)      swig=swig   ;;
+        2|2.*)
+            echo "Unsupported Python $MATRIX_PYVER on $MATRIX_OS" 1>&2
+            exit 1
+            ;;
         esac
+        swig=swig
         ;;
     swig-*)
         swig=swig
@@ -75,7 +90,7 @@ macos-*)
         swig=
         ;;
     esac
-    if [ "$use_tarball" = n -a -n "$swig" ]; then
+    if [ -n "$swig" -a "$autogen" = y ]; then
         pkgs="$pkgs $swig"
         with_swig="$(brew --prefix "$swig")/bin/swig"
     fi
@@ -114,7 +129,7 @@ else
     opt_swig_perl="PERL=none"
     opt_swig_ruby="RUBY=none"
 fi
-if [ "$use_tarball" = y ]; then
+if [ "$autogen" != y ]; then
     opt_swig=
 elif [ -n "$with_swig" ]; then
     opt_swig="--with-swig=$with_swig"
@@ -130,18 +145,18 @@ opt_junit="--without-junit"
 case "$target" in
 swig-py)
     if [ "$has_opt_swig_lang" = y ]; then
-        opt_swig_python="--with-swig-python=python"
+        opt_swig_python="--with-swig-python=$swig_python"
     else
-        opt_swig_python="PYTHON=python"
+        opt_swig_python="PYTHON=$swig_python"
     fi
     opt_py3c="--with-py3c=$workspace/py3c"
     use_installed_libs=y
     ;;
 swig-rb)
     if [ "$has_opt_swig_lang" = y ]; then
-        opt_swig_ruby="--with-swig-ruby=ruby"
+        opt_swig_ruby="--with-swig-ruby=$swig_ruby"
     else
-        opt_swig_ruby="RUBY=ruby"
+        opt_swig_ruby="RUBY=$swig_ruby"
     fi
     use_installed_libs=y
     case "$MATRIX_OS" in
@@ -153,9 +168,9 @@ swig-rb)
     ;;
 swig-pl)
     if [ "$has_opt_swig_lang" = y ]; then
-        opt_swig_perl="--with-swig-perl=perl"
+        opt_swig_perl="--with-swig-perl=$swig_perl"
     else
-        opt_swig_perl="PERL=perl"
+        opt_swig_perl="PERL=$swig_perl"
     fi
     use_installed_libs=y
     cflags="$cflags -Wno-compound-token-split-by-macro"
@@ -174,7 +189,7 @@ all|install)
     ;;
 esac
 
-if [ ! -f configure ]; then
+if [ "$autogen" = y ]; then
     mkdir -p subversion/bindings/swig/proxy || :
     /bin/sh autogen.sh
 fi
@@ -232,6 +247,9 @@ swig-pl)
     time make check-swig-pl TEST_VERBOSE=1
     ;;
 swig-py)
+    if [ "$clean_swig_py" = y ]; then
+        make clean-swig-py
+    fi
     time make -j"$parallel" swig-py
     sed_repl Makefile -e 's#/tests/run_all\.py#& -v#'
     time make check-swig-py
