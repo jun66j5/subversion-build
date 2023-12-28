@@ -22,6 +22,11 @@ on:
         type: choice
         default: ''
         options: ['', 'windows-2022', 'windows-2019']
+      targets:
+        description: 'Test targets'
+        required: false
+        type: string
+        default: 'core swig-py swig-pl swig-rb javahl bindings'
       subversion-repository:
         required: true
         default: apache/subversion
@@ -46,6 +51,7 @@ jobs:
       ubuntu-version: ${{ steps.convert.outputs.ubuntu-version }}
       macos-version: ${{ steps.convert.outputs.macos-version }}
       windows-version: ${{ steps.convert.outputs.windows-version }}
+      targets: ${{ steps.convert.outputs.targets }}
       dependencies: ${{ steps.convert.outputs.dependencies }}
     steps:
       - name: Show inputs
@@ -62,29 +68,31 @@ jobs:
       - name: Convert inputs to json outputs
         id: convert
         env:
-          INPUT_UBUNTU_VERSION: ${{ inputs.ubuntu-version }}
-          INPUT_MACOS_VERSION: ${{ inputs.macos-version }}
-          INPUT_WINDOWS_VERSION: ${{ inputs.windows-version }}
-          INPUT_DEPENDENCIES: ${{ inputs.dependencies }}
+          INPUTS: ${{ toJSON(inputs) }}
         run: |
           set -ex
           words_json() {
             local name="$1"
-            local value="$2"
-            value="$(echo "$value" | jq -RMcn 'inputs | split(" ")')"
+            local value="$(
+              echo "$INPUTS" |
+              jq -Mc '."'"$name"'" | split(" ")'
+            )"
             echo "$name=$value"
           }
-          deps_json() {
+          pairs_json() {
             local name="$1"
-            local value="$2"
-            value="$(echo "$value" | jq -RMcn 'inputs | split(" ") | map(split("=") | {(.[0]): .[1]}) | add')"
+            local value="$(
+              echo "$INPUTS" |
+              jq -Mc '."'"$name"'" | split(" ") | map(split("=") | {(.[0]): .[1]}) | add'
+            )"
             echo "$name=$value"
           }
           {
-            words_json 'ubuntu-version' "$INPUT_UBUNTU_VERSION"
-            words_json 'macos-version' "$INPUT_MACOS_VERSION"
-            words_json 'windows-version' "$INPUT_WINDOWS_VERSION"
-            deps_json 'dependencies' "$INPUT_DEPENDENCIES"
+            words_json 'ubuntu-version'
+            words_json 'macos-version'
+            words_json 'windows-version'
+            words_json 'targets'
+            pairs_json 'dependencies'
           } >>"$GITHUB_OUTPUT"
 
   test-ubuntu:
@@ -92,6 +100,7 @@ jobs:
     needs: setup
     uses: ./.github/workflows/test-ubuntu.yml
     with:
+      targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.ubuntu-version }}
       subversion-repository: ${{ inputs.subversion-repository }}
       subversion-ref: ${{ inputs.subversion-ref }}
@@ -103,6 +112,7 @@ jobs:
     needs: setup
     uses: ./.github/workflows/test-macos.yml
     with:
+      targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.macos-version }}
       subversion-repository: ${{ inputs.subversion-repository }}
       subversion-ref: ${{ inputs.subversion-ref }}
@@ -114,6 +124,7 @@ jobs:
     needs: setup
     uses: ./.github/workflows/test-windows.yml
     with:
+      targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.windows-version }}
       subversion-repository: ${{ inputs.subversion-repository }}
       subversion-ref: ${{ inputs.subversion-ref }}
