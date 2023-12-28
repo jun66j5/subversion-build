@@ -4,6 +4,7 @@ name: Run tests on macOS
 on:
   workflow_call:
     inputs:
+      targets: {required: true, type: string}
       os: {required: true, type: string}
       subversion-repository: {required: true, type: string}
       subversion-ref: {required: true, type: string}
@@ -16,8 +17,9 @@ env:
 jobs:
 
   swig-py:
+    if: ${{ contains(fromJson(inputs.targets), 'swig-py') }}
     runs-on: ${{ matrix.os }}
-
+    needs: prepare
     timeout-minutes: 15
 
     strategy:
@@ -25,8 +27,6 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.os) }}
         python-version: ['3.12', '3.11', '3.10']
-
-    needs: prepare
 
     env:
       MATRIX_OS: ${{ matrix.os }}
@@ -66,8 +66,9 @@ jobs:
 
 
   swig-rb:
+    if: ${{ contains(fromJson(inputs.targets), 'swig-rb') }}
     runs-on: ${{ matrix.os }}
-
+    needs: prepare
     timeout-minutes: 15
 
     strategy:
@@ -75,8 +76,6 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.os) }}
         ruby-version: ['3.3', '3.2', '2.7']
-
-    needs: prepare
 
     env:
       MATRIX_OS: ${{ matrix.os }}
@@ -108,8 +107,9 @@ jobs:
 
 
   swig-pl:
+    if: ${{ contains(fromJson(inputs.targets), 'swig-pl') }}
     runs-on: ${{ matrix.os }}
-
+    needs: prepare
     timeout-minutes: 15
 
     strategy:
@@ -117,8 +117,6 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.os) }}
         # perl-version: ['5.34', '5.22']
-
-    needs: prepare
 
     env:
       MATRIX_OS: ${{ matrix.os }}
@@ -152,8 +150,9 @@ jobs:
 
 
   javahl:
+    if: ${{ contains(fromJson(inputs.targets), 'javahl') }}
     runs-on: ${{ matrix.os }}
-
+    needs: prepare
     timeout-minutes: 15
 
     strategy:
@@ -161,8 +160,6 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.os) }}
         java-version: ['21', '8']
-
-    needs: prepare
 
     env:
       MATRIX_OS: ${{ matrix.os }}
@@ -195,8 +192,8 @@ jobs:
 
 
   core:
+    if: ${{ contains(fromJson(inputs.targets), 'core') }}
     runs-on: ${{ matrix.os }}
-
     timeout-minutes: 90
 
     strategy:
@@ -237,7 +234,6 @@ jobs:
 
   prepare:
     runs-on: ${{ matrix.os }}
-
     timeout-minutes: 60
 
     strategy:

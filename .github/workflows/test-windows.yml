@@ -4,6 +4,7 @@ name: Run tests on Windows
 on:
   workflow_call:
     inputs:
+      targets: {required: true, type: string}
       os: {required: true, type: string}
       subversion-repository: {required: true, type: string}
       subversion-ref: {required: true, type: string}
@@ -18,16 +19,15 @@ env:
 jobs:
 
   core:
+    if: ${{ contains(fromJson(inputs.targets), 'core') }}
     runs-on: ${{ matrix.os }}
-
+    needs: prepare
     timeout-minutes: 60
 
     strategy:
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
-
-    needs: prepare
 
     defaults:
       run:
@@ -80,8 +80,9 @@ jobs:
 
 
   bindings:
+    if: ${{ contains(fromJson(inputs.targets), 'bindings') }}
     runs-on: ${{ matrix.os }}
-
+    needs: prepare
     timeout-minutes: 30
 
     strategy:
@@ -91,8 +92,6 @@ jobs:
         python-version: ['3.x']
         perl-version: ['5']
         java-version: ['21']
-
-    needs: prepare
 
     defaults:
       run:
@@ -168,7 +167,6 @@ jobs:
 
   prepare:
     runs-on: ${{ matrix.os }}
-
     timeout-minutes: 60
 
     strategy:
