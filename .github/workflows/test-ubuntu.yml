@@ -80,7 +80,7 @@ jobs:
     if: ${{ contains(fromJson(inputs.targets), 'swig-rb') }}
     runs-on: ${{ matrix.os }}
     needs: prepare
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
