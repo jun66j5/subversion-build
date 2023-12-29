@@ -9,12 +9,10 @@ on:
       subversion-repository: {required: true, type: string}
       subversion-ref: {required: true, type: string}
       subversion-archive: {required: false, type: string}
-      sqlite-archive: {required: true, type: string}
       dependencies: {required: true, type: string}
 
 env:
   INPUT_SVNARC: ${{ inputs.subversion-archive }}
-  INPUT_SQLITE_ARC: ${{ inputs.sqlite-archive }}
 
 jobs:
 
@@ -294,4 +292,4 @@ jobs:
       with:
         name: log-${{ matrix.os }}-prepare-vcpkg
         path: |
-          C:\vcpkg\buildtrees
+          C:\vcpkg\buildtrees\**\*.log
