@@ -9,11 +9,8 @@ $vcpkg_root = $Env:VCPKG_INSTALLATION_ROOT
 $vcpkg_downloads = "$LocalAppData\vcpkg\downloads"
 $vcpkg_triplet = "$arch-windows-release"
 $vcpkg_dir = "$vcpkg_root\installed\$vcpkg_triplet"
+$vcpkg_dir_static = "$vcpkg_root\installed\$arch-windows-static"
 $deps_prefix = "$LocalAppData\deps"
-$sqlite_url = $Env:INPUT_SQLITE_ARC
-$sqlite_arc = ([uri]$sqlite_url).Segments[-1]
-$sqlite_name = $sqlite_arc -Replace '\.zip$', ''
-$sqlite_arc = "$workspace\$sqlite_arc"
 $java_home = $Env:JAVA_HOME
 $junit_url = 'https://search.maven.org/remotecontent?filepath=junit/junit/4.13.2/junit-4.13.2.jar'
 $junit_file = "$workspace\junit4.jar"
@@ -181,9 +178,6 @@ switch -Exact ($args[0]) {
     }
 }
 
-Invoke-WebRequest -Uri $sqlite_url -OutFile $sqlite_arc
-Expand-Archive -LiteralPath $sqlite_arc -DestinationPath $workspace
-
 if (!$svnarcurl) {
     New-Item -Force -ItemType Directory -Path "subversion\bindings\swig\proxy"
     & svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
@@ -197,7 +191,7 @@ if (!$svnarcurl) {
           "--with-openssl=$vcpkg_dir" `
           "--with-zlib=$vcpkg_dir" `
           "--with-serf=$deps_prefix" `
-          "--with-sqlite=$workspace\$sqlite_name" `
+          "--with-sqlite=$vcpkg_dir_static" `
           "--with-libintl=$vcpkg_dir" `
           $genmake_opts
 if ($LASTEXITCODE) {
