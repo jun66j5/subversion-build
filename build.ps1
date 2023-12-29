@@ -197,6 +197,17 @@ if (!$svnarcurl) {
 if ($LASTEXITCODE) {
     exit $LASTEXITCODE
 }
+
+Set-Content -LiteralPath "Directory.Build.Props" -Value @'
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <DisableSpecificWarnings>4459;4702;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
+'@
 & msbuild subversion_vcnet.sln `
           -nologo -v:q -m -fl `
           "-t:$build_targets" "-p:Configuration=Release;Platform=$arch"
