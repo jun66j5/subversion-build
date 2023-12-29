@@ -14,15 +14,10 @@ on:
         required: false
         type: string
         default: 'core swig-py swig-pl swig-rb javahl'
-      subversion-repository:
+      subversion:
+        description: 'Subversion (owner/repo@ref or URL-to-tarball)'
         required: true
-        default: apache/subversion
-      subversion-ref:
-        required: true
-        default: 'trunk'
-      subversion-archive:
-        required: false
-        default: ''
+        default: 'apache/subversion@trunk'
       dependencies:
         required: true
         default: 'py3c=v1.4 apr=1.7.4 apr-util=1.6.3 httpd=2.4.58 serf=1.3.10'
@@ -37,6 +32,7 @@ jobs:
       macos: ${{ steps.convert.outputs.macos }}
       windows: ${{ steps.convert.outputs.windows }}
       targets: ${{ steps.convert.outputs.targets }}
+      subversion: ${{ steps.convert.outputs.subversion }}
       dependencies: ${{ steps.convert.outputs.dependencies }}
 
     steps:
@@ -66,7 +62,7 @@ jobs:
             )"
             echo "$name=$value"
           }
-          words_json() {
+          targets_json() {
             local name="$1"
             local value="$(
               cat "$tmpfile" |
@@ -74,7 +70,27 @@ jobs:
             )"
             echo "$name=$value"
           }
-          pairs_json() {
+          svn_json() {
+            local name="$1"
+            local value="$(jq -r ".\"$name\"" <"$tmpfile")"
+            case "$value" in
+            apache/subversion@*|$GITHUB_REPOSITORY_OWNER/*@*)
+              value="$(
+                echo "$value" |
+                jq -RMc 'split("@") | {repository: .[0], ref: .[1]}'
+              )"
+              ;;
+            https://dist.apache.org/*/subversion-*.tar.bz2)
+              value="$(echo "$value" | jq -RMc '{archive: .}')"
+              ;;
+            *)
+              echo "Unrecognized inputs.subversion: '$value'" 1>&2
+              exit 1
+              ;;
+            esac
+            echo "$name=$value"
+          }
+          deps_json() {
             local name="$1"
             local value="$(
               cat "$tmpfile" |
@@ -88,8 +104,9 @@ jobs:
             os_json 'ubuntu'
             os_json 'macos'
             os_json 'windows'
-            words_json 'targets'
-            pairs_json 'dependencies'
+            targets_json 'targets'
+            svn_json 'subversion'
+            deps_json 'dependencies'
           } >>"$GITHUB_OUTPUT"
           {
             echo '### Outputs:'
@@ -99,20 +116,20 @@ jobs:
           } >>"$GITHUB_STEP_SUMMARY"
 
       - name: Set up archives cache
-        if: ${{ inputs.subversion-archive }}
+        if: ${{ fromJson(steps.convert.outputs.subversion).archive }}
         uses: actions/cache@v3
         with:
           path: arc
           enableCrossOsArchive: true
-          key: arc--${{ inputs.subversion-archive }}
+          key: arc--${{ fromJson(steps.convert.outputs.subversion).archive }}
           restore-keys: |
-            arc--${{ inputs.subversion-archive }}
+            arc--${{ fromJson(steps.convert.outputs.subversion).archive }}
             arc--
 
       - name: Download archives
-        if: ${{ inputs.subversion-archive }}
+        if: ${{ fromJson(steps.convert.outputs.subversion).archive }}
         env:
-          INPUT_SVNARC: ${{ inputs.subversion-archive }}
+          INPUT_SVNARC: ${{ fromJson(steps.convert.outputs.subversion).archive }}
         run: |
           set -ex
           test -d arc || mkdir arc
@@ -126,9 +143,7 @@ jobs:
     with:
       targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.ubuntu }}
-      subversion-repository: ${{ inputs.subversion-repository }}
-      subversion-ref: ${{ inputs.subversion-ref }}
-      subversion-archive: ${{ inputs.subversion-archive }}
+      subversion: ${{ needs.setup.outputs.subversion }}
       dependencies: ${{ needs.setup.outputs.dependencies }}
 
   test-macos:
@@ -138,9 +153,7 @@ jobs:
     with:
       targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.macos }}
-      subversion-repository: ${{ inputs.subversion-repository }}
-      subversion-ref: ${{ inputs.subversion-ref }}
-      subversion-archive: ${{ inputs.subversion-archive }}
+      subversion: ${{ needs.setup.outputs.subversion }}
       dependencies: ${{ needs.setup.outputs.dependencies }}
 
   test-windows:
@@ -150,7 +163,5 @@ jobs:
     with:
       targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.windows }}
-      subversion-repository: ${{ inputs.subversion-repository }}
-      subversion-ref: ${{ inputs.subversion-ref }}
-      subversion-archive: ${{ inputs.subversion-archive }}
+      subversion: ${{ needs.setup.outputs.subversion }}
       dependencies: ${{ needs.setup.outputs.dependencies }}

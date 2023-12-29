@@ -6,13 +6,11 @@ on:
     inputs:
       targets: {required: true, type: string}
       os: {required: true, type: string}
-      subversion-repository: {required: true, type: string}
-      subversion-ref: {required: true, type: string}
-      subversion-archive: {required: false, type: string}
+      subversion: {required: true, type: string}
       dependencies: {required: true, type: string}
 
 env:
-  INPUT_SVNARC: ${{ inputs.subversion-archive }}
+  INPUT_SVNARC: ${{ fromJson(inputs.subversion).archive }}
 
 jobs:
 
@@ -52,11 +50,11 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
-      if: ${{ !inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).repository }}
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.subversion-repository }}
-        ref: ${{ inputs.subversion-ref }}
+        repository: ${{ fromJson(inputs.subversion).repository }}
+        ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
     - name: Checkout py3c
@@ -67,13 +65,13 @@ jobs:
         path: py3c
 
     - name: Set up archives cache
-      if: ${{ inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ inputs.subversion-archive }}
+        key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - run: ./build.sh swig-py
 
@@ -109,21 +107,21 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
-      if: ${{ !inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).repository }}
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.subversion-repository }}
-        ref: ${{ inputs.subversion-ref }}
+        repository: ${{ fromJson(inputs.subversion).repository }}
+        ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
     - name: Set up archives cache
-      if: ${{ inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ inputs.subversion-archive }}
+        key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - run: ./build.sh swig-rb
 
@@ -159,21 +157,21 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
-      if: ${{ !inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).repository }}
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.subversion-repository }}
-        ref: ${{ inputs.subversion-ref }}
+        repository: ${{ fromJson(inputs.subversion).repository }}
+        ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
     - name: Set up archives cache
-      if: ${{ inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ inputs.subversion-archive }}
+        key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - run: ./build.sh swig-pl
 
@@ -210,21 +208,21 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
-      if: ${{ !inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).repository }}
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.subversion-repository }}
-        ref: ${{ inputs.subversion-ref }}
+        repository: ${{ fromJson(inputs.subversion).repository }}
+        ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
     - name: Set up archives cache
-      if: ${{ inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ inputs.subversion-archive }}
+        key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - run: ./build.sh javahl
 
@@ -253,21 +251,21 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
-      if: ${{ !inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).repository }}
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.subversion-repository }}
-        ref: ${{ inputs.subversion-ref }}
+        repository: ${{ fromJson(inputs.subversion).repository }}
+        ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
     - name: Set up archives cache
-      if: ${{ inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ inputs.subversion-archive }}
+        key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - run: ./build.sh all
 
@@ -302,20 +300,20 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Checkout subversion
-      if: ${{ !inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).repository }}
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.subversion-repository }}
-        ref: ${{ inputs.subversion-ref }}
+        repository: ${{ fromJson(inputs.subversion).repository }}
+        ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
     - name: Set up archives cache
-      if: ${{ inputs.subversion-archive }}
+      if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ inputs.subversion-archive }}
+        key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - run: ./build.sh install
