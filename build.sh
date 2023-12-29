@@ -66,6 +66,7 @@ ubuntu-*)
     with_apr_util=/usr/bin/apu-1-config
     with_apxs=/usr/bin/apxs2
     with_sqlite=/usr
+    opt_sqlite_compat_version=
     parallel=3
     ;;
 macos-*)
@@ -100,6 +101,8 @@ macos-*)
     with_apr_util="$(brew --prefix apr-util)/bin/apu-1-config"
     with_apxs="$(brew --prefix httpd)/bin/apxs"
     with_sqlite="$(brew --prefix sqlite)"
+    sqlite_version="$(/usr/bin/sqlite3 :memory: 'SELECT sqlite_version()')"
+    opt_sqlite_compat_version="--enable-sqlite-compatibility-version=$sqlite_version"
     parallel=4
     ;;
 *)
@@ -207,8 +210,8 @@ fi
 
 ./configure --prefix="$prefix" \
             --with-apr="$with_apr" --with-apr-util="$with_apr_util" \
-            --with-sqlite="$with_sqlite" $opt_swig "$opt_py3c" "$opt_apxs" \
-            "$opt_javahl" "$opt_jdk" "$opt_junit" \
+            --with-sqlite="$with_sqlite" $opt_sqlite_compat_version $opt_swig \
+            "$opt_py3c" "$opt_apxs" "$opt_javahl" "$opt_jdk" "$opt_junit" \
             --without-doxygen --without-berkeley-db --without-gpg-agent \
             --without-gnome-keyring --without-kwallet \
             "$opt_swig_python" "$opt_swig_perl" "$opt_swig_ruby" \
