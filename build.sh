@@ -59,9 +59,11 @@ ubuntu-*)
         pkgs="$pkgs $swig"
         with_swig="/usr/bin/$swig"
     fi
+    echo '::group::apt-get'
     sudo apt-get update -qq
     sudo apt-get install -qq -y $pkgs
     sudo apt-get purge -qq -y subversion libsvn-dev
+    echo '::endgroup::'
     with_apr=/usr/bin/apr-1-config
     with_apr_util=/usr/bin/apu-1-config
     with_apxs=/usr/bin/apxs2
@@ -93,10 +95,12 @@ macos-*)
         pkgs="$pkgs $swig"
         with_swig="$(brew --prefix "$swig")/bin/swig"
     fi
+    echo '::group::brew'
     brew update
     brew outdated $pkgs || brew upgrade $pkgs || :
     brew install $pkgs
     brew uninstall subversion || :
+    echo '::endgroup::'
     with_apr="$(brew --prefix apr)/bin/apr-1-config"
     with_apr_util="$(brew --prefix apr-util)/bin/apu-1-config"
     with_apxs="$(brew --prefix httpd)/bin/apxs"
@@ -192,10 +196,13 @@ esac
 
 if [ "$autogen" = y ]; then
     mkdir -p subversion/bindings/swig/proxy || :
+    echo '::group::make autogen.sh'
     /bin/sh autogen.sh
+    echo '::endgroup::'
 fi
 
 if [ "$use_installed_libs" = y ]; then
+    echo '::group::gen-make.py'
     PATH="$prefix/bin:$PATH"
     export PATH
     installed_libs="$(cd "$prefix/lib" && \
@@ -206,8 +213,10 @@ if [ "$use_installed_libs" = y ]; then
     else
         python gen-make.py --installed-libs="$installed_libs"
     fi
+    echo '::endgroup::'
 fi
 
+echo '::group::./configure'
 ./configure --prefix="$prefix" \
             --with-apr="$with_apr" --with-apr-util="$with_apr_util" \
             --with-sqlite="$with_sqlite" $opt_sqlite_compat_version $opt_swig \
@@ -216,14 +225,21 @@ fi
             --without-gnome-keyring --without-kwallet \
             "$opt_swig_python" "$opt_swig_perl" "$opt_swig_ruby" \
             CFLAGS="$cflags" LDFLAGS="$ldflags"
+echo '::endgroup::'
 
 case "$target" in
 install)
+    echo '::group::make all'
     time make -j"$parallel" all
+    echo '::endgroup::'
+    echo '::group::make install'
     make install
+    echo '::endgroup::'
     ;;
 all)
+    echo '::group::make all'
     time make -j"$parallel" all
+    echo '::endgroup::'
     case "$MATRIX_OS" in
     ubuntu-*)
         tasks='check svnserveautocheck davautocheck'
@@ -234,31 +250,43 @@ all)
     esac
     rc=0
     for task in $tasks; do
+        echo "::group::make $task"
         time make $task PARALLEL="$parallel" APACHE_MPM=event || rc=1
         for i in tests.log fails.log; do
             test -f "$i" && mv -v "$i" "$task-$i"
         done
+        echo '::endgroup::'
     done
     exit $rc
     ;;
 swig-pl)
+    echo '::group::make swig-pl'
     time make -j"$parallel" swig-pl
+    echo '::endgroup::'
     time make check-swig-pl TEST_VERBOSE=1
     ;;
 swig-py)
     if [ "$clean_swig_py" = y ]; then
+        echo '::group::make clean-swig-py'
         make clean-swig-py
+        echo '::endgroup::'
     fi
+    echo '::group::make swig-py'
     time make -j"$parallel" swig-py
+    echo '::endgroup::'
     sed_repl Makefile -e 's#/tests/run_all\.py#& -v#'
     time make check-swig-py
     ;;
 swig-rb)
+    echo '::group::make swig-rb'
     time make -j"$parallel" swig-rb
+    echo '::endgroup::'
     time make check-swig-rb SWIG_RB_TEST_VERBOSE=v
     ;;
 javahl)
+    echo '::group::make javahl'
     time make javahl  # without -j option
+    echo '::endgroup::'
     time make check-all-javahl
     ;;
 esac

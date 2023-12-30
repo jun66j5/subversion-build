@@ -26,6 +26,7 @@ if ($svnarcurl) {
 }
 Push-Location -LiteralPath "$workspace\subversion"
 
+Write-Output '::group::vcpkg'
 New-Item -Force -ItemType Directory -Path $vcpkg_downloads
 Push-Location -LiteralPath $vcpkg_root
 & git fetch --depth=1 origin
@@ -44,6 +45,7 @@ if ($LASTEXITCODE) {
     Write-Error "vcpkg install exited with $LASTEXITCODE"
     exit 1
 }
+Write-Output '::endgroup::'
 
 switch -Exact ($args[0]) {
     'prepare' {
@@ -56,6 +58,7 @@ switch -Exact ($args[0]) {
             '--',
             '-nologo', '-v:q', '-fl')
         # apr
+        Write-Output '::group::apr'
         Push-Location "$workspace\deps\apr"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
                 -D CMAKE_BUILD_TYPE=Release `
@@ -73,7 +76,9 @@ switch -Exact ($args[0]) {
             exit $LASTEXITCODE
         }
         Pop-Location
+        Write-Output '::endgroup::'
         # apr-util
+        Write-Output '::group::apr-util'
         Push-Location "$workspace\deps\apr-util"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
                 -D "OPENSSL_ROOT_DIR=$cmake_vcpkg_dir" `
@@ -95,7 +100,9 @@ switch -Exact ($args[0]) {
         Copy-Item -Path "$vcpkg_dir\lib\libexpat.lib" -Destination "$deps_prefix\lib"
         Copy-Item -Path "$vcpkg_dir\bin\libexpat.dll" -Destination "$deps_prefix\bin"
         Pop-Location
+        Write-Output '::endgroup::'
         # httpd
+        Write-Output '::group::httpd'
         Push-Location "$workspace\deps\httpd"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
                 -D "APR_INCLUDE_DIR=$cmake_prefix/include" `
@@ -122,7 +129,9 @@ switch -Exact ($args[0]) {
         Copy-Item -Path "$vcpkg_dir\bin\pcre.dll" -Destination "$deps_prefix\bin"
         Copy-Item -Path "$vcpkg_dir\bin\zlib1.dll" -Destination "$deps_prefix\bin"
         Pop-Location
+        Write-Output '::endgroup::'
         # serf
+        Write-Output '::group::serf'
         Push-Location "$workspace\deps\serf"
         & $python -m pip install scons
         $scons = ($pythonLocation -eq $null) ? 'scons.exe' : "$pythonLocation\scripts\scons.exe"
@@ -147,6 +156,7 @@ switch -Exact ($args[0]) {
             exit $LASTEXITCODE
         }
         Pop-Location
+        Write-Output '::endgroup::'
         exit
     }
     'core' {
@@ -181,6 +191,8 @@ if (!$svnarcurl) {
     New-Item -Force -ItemType Directory -Path "subversion\bindings\swig\proxy"
     & svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
 }
+
+Write-Output '::group::gen-make.py'
 & $python gen-make.py `
           --vsnet-version=2019 `
           --enable-nls `
@@ -196,7 +208,9 @@ if (!$svnarcurl) {
 if ($LASTEXITCODE) {
     exit $LASTEXITCODE
 }
+Write-Output '::endgroup::'
 
+Write-Output '::group::msbuild subversion_vcnet.sln'
 Set-Content -LiteralPath "Directory.Build.Props" -Value @'
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
@@ -213,13 +227,17 @@ Set-Content -LiteralPath "Directory.Build.Props" -Value @'
 if ($LASTEXITCODE) {
     exit $LASTEXITCODE
 }
+Write-Output '::endgroup::'
+
 $Env:PATH = "$deps_prefix\bin;$vcpkg_dir\bin;$($Env:PATH)"
 $rc = 0
 foreach ($item in $test_targets) {
+    Write-Output "::group::win-tests.py $item"
     & $python win-tests.py -crv "--httpd-dir=$deps_prefix" --httpd-no-log $item
     if ($LASTEXITCODE) {
         Write-Warning "win-tests.py $item exited with $LASTEXITCODE"
         $rc = 1
     }
+    Write-Output '::endgroup::'
 }
 exit $rc
