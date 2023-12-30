@@ -1,4 +1,5 @@
-$svnarcurl = $Env:INPUT_SVNARC
+$svnarcurl = $Env:SVNARC
+$junit_ver = $Env:JUNIT_VER
 $LocalAppData = $Env:LocalAppData
 $ProgramData = $Env:ProgramData
 $workspace = $Env:GITHUB_WORKSPACE
@@ -12,8 +13,7 @@ $vcpkg_dir = "$vcpkg_root\installed\$vcpkg_triplet"
 $vcpkg_dir_static = "$vcpkg_root\installed\$arch-windows-static"
 $deps_prefix = "$LocalAppData\deps"
 $java_home = $Env:JAVA_HOME
-$junit_url = 'https://search.maven.org/remotecontent?filepath=junit/junit/4.13.2/junit-4.13.2.jar'
-$junit_file = "$workspace\junit4.jar"
+$junit_file = "$workspace\arc\junit-$junit_ver.jar"
 $python = $pythonLocation ? "$pythonLocation\python.exe" : 'python.exe'
 
 if ($svnarcurl) {
@@ -172,7 +172,6 @@ switch -Exact ($args[0]) {
                                "--with-junit=$junit_file")
             $build_targets += @('__JAVAHL__', '__JAVAHL_TESTS__')
             $test_targets += '--javahl'
-            Invoke-WebRequest -Uri $junit_url -OutFile $junit_file
         }
         $build_targets = $build_targets -Join ';'
     }
