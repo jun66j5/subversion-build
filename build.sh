@@ -18,9 +18,9 @@ sed_repl() {
     sed "$@" "$orig" >"$new" && mv "$new" "$orig"
 }
 
-if [ -n "$INPUT_SVNARC" ]; then
+if [ -n "$SVNARC" ]; then
     autogen=n
-    arc="$workspace/arc/${INPUT_SVNARC##*/}"
+    arc="$workspace/arc/${SVNARC##*/}"
     tar xjf "$arc" -C "$workspace"
     mv "$workspace/subversion"-*.*.* "$workspace/subversion"
 else
@@ -181,7 +181,7 @@ swig-pl)
 javahl)
     opt_javahl="--enable-javahl"
     opt_jdk="--with-jdk=$JAVA_HOME"
-    opt_junit="--with-junit=$prefix/lib/junit4.jar"
+    opt_junit="--with-junit=$workspace/arc/junit-$JUNIT_VER.jar"
     use_installed_libs=y
     ;;
 all|install)
@@ -221,8 +221,6 @@ case "$target" in
 install)
     time make -j"$parallel" all
     make install
-    curl -L -o "$prefix/lib/junit4.jar" \
-        'https://search.maven.org/remotecontent?filepath=junit/junit/4.13.2/junit-4.13.2.jar'
     ;;
 all)
     time make -j"$parallel" all

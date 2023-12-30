@@ -20,7 +20,7 @@ on:
         default: 'apache/subversion@trunk'
       dependencies:
         required: true
-        default: 'py3c=v1.4 apr=1.7.4 apr-util=1.6.3 httpd=2.4.58 serf=1.3.10'
+        default: 'py3c=v1.4 apr=1.7.4 apr-util=1.6.3 httpd=2.4.58 serf=1.3.10 junit=4.13.2'
 
 jobs:
   setup:
@@ -115,7 +115,7 @@ jobs:
             echo '```'
           } >>"$GITHUB_STEP_SUMMARY"
 
-      - name: Set up archives cache
+      - name: Cache Subversion archives
         if: ${{ fromJson(steps.convert.outputs.subversion).archive }}
         uses: actions/cache@v3
         with:
@@ -126,14 +126,35 @@ jobs:
             arc--${{ fromJson(steps.convert.outputs.subversion).archive }}
             arc--
 
-      - name: Download archives
+      - name: Cache junit jar file
+        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
+        uses: actions/cache@v3
+        with:
+          path: arc
+          enableCrossOsArchive: true
+          key: arc--junit-${{ fromJson(steps.convert.outputs.dependencies).junit }}
+          restore-keys: |
+            arc--junit-${{ fromJson(steps.convert.outputs.dependencies).junit }}
+            arc--
+
+      - name: Download Subversion archives
         if: ${{ fromJson(steps.convert.outputs.subversion).archive }}
         env:
-          INPUT_SVNARC: ${{ fromJson(steps.convert.outputs.subversion).archive }}
+          SVNARC: ${{ fromJson(steps.convert.outputs.subversion).archive }}
         run: |
           set -ex
           test -d arc || mkdir arc
-          wget -nv -N -P arc "$INPUT_SVNARC" "${INPUT_SVNARC%.tar.bz2}.zip"
+          wget -nv -N -P arc "$SVNARC" "${SVNARC%.tar.bz2}.zip"
+
+      - name: Download junit jar file
+        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
+        env:
+          JUNIT_VER: ${{ fromJson(steps.convert.outputs.dependencies).junit }}
+        run: |
+          set -ex
+          junit_url="https://repo1.maven.org/maven2/junit/junit/$JUNIT_VER/junit-$JUNIT_VER.jar"
+          test -d arc || mkdir arc
+          wget -nv -N -P arc "$junit_url"
 
 
   test-ubuntu:

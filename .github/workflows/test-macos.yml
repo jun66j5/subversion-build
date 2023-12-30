@@ -10,7 +10,8 @@ on:
       dependencies: {required: true, type: string}
 
 env:
-  INPUT_SVNARC: ${{ fromJson(inputs.subversion).archive }}
+  SVNARC: ${{ fromJson(inputs.subversion).archive }}
+  JUNIT_VER: ${{ fromJson(inputs.dependencies).junit }}
 
 jobs:
 
@@ -31,7 +32,7 @@ jobs:
       MATRIX_PYVER: ${{ matrix.python-version }}
 
     steps:
-    - name: Set up libraries
+    - name: Cache libraries
       uses: actions/cache@v3
       with:
         path: ~/svn
@@ -60,7 +61,7 @@ jobs:
         ref: ${{ fromJson(inputs.dependencies).py3c }}
         path: py3c
 
-    - name: Set up archives cache
+    - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
@@ -88,7 +89,7 @@ jobs:
       MATRIX_OS: ${{ matrix.os }}
 
     steps:
-    - name: Set up libraries
+    - name: Cache libraries
       uses: actions/cache@v3
       with:
         path: ~/svn
@@ -110,7 +111,7 @@ jobs:
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
-    - name: Set up archives cache
+    - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
@@ -138,7 +139,7 @@ jobs:
       MATRIX_OS: ${{ matrix.os }}
 
     steps:
-    - name: Set up libraries
+    - name: Cache libraries
       uses: actions/cache@v3
       with:
         path: ~/svn
@@ -162,7 +163,7 @@ jobs:
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
-    - name: Set up archives cache
+    - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
@@ -190,7 +191,7 @@ jobs:
       MATRIX_OS: ${{ matrix.os }}
 
     steps:
-    - name: Set up libraries
+    - name: Cache libraries
       uses: actions/cache@v3
       with:
         path: ~/svn
@@ -213,7 +214,7 @@ jobs:
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
-    - name: Set up archives cache
+    - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
@@ -221,6 +222,14 @@ jobs:
         fail-on-cache-miss: true
         enableCrossOsArchive: true
         key: arc--${{ fromJson(inputs.subversion).archive }}
+
+    - name: Cache junit jar file
+      uses: actions/cache@v3
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc--junit-${{ fromJson(inputs.dependencies).junit }}
 
     - run: ./build.sh javahl
 
@@ -239,7 +248,7 @@ jobs:
       MATRIX_OS: ${{ matrix.os }}
 
     steps:
-    - name: Set up libraries
+    - name: Cache libraries
       uses: actions/cache@v3
       with:
         path: ~/svn
@@ -256,7 +265,7 @@ jobs:
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
-    - name: Set up archives cache
+    - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
@@ -288,7 +297,7 @@ jobs:
       MATRIX_OS: ${{ matrix.os }}
 
     steps:
-    - name: Set up libraries
+    - name: Cache libraries
       uses: actions/cache@v3
       with:
         path: ~/svn
@@ -305,7 +314,7 @@ jobs:
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
 
-    - name: Set up archives cache
+    - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
       uses: actions/cache@v3
       with:
