@@ -28,6 +28,8 @@ else
 fi
 cd "$workspace/subversion"
 
+test -d "$prefix/lib" || mkdir -p "$prefix/lib"
+
 case "$MATRIX_OS" in
 ubuntu-*)
     pkgs="build-essential libtool libtool-bin libapr1-dev libaprutil1-dev
@@ -65,14 +67,15 @@ ubuntu-*)
     sudo apt-get purge -qq -y subversion libsvn-dev
     echo '::endgroup::'
     with_apr=/usr/bin/apr-1-config
-    with_apr_util=/usr/bin/apu-1-config
+    with_apu=/usr/bin/apu-1-config
+    with_serf=
     with_apxs=/usr/bin/apxs2
-    with_sqlite=/usr
-    opt_sqlite_compat_version=
+    with_sqlite=
+    sqlite_compat_ver=
     parallel=3
     ;;
 macos-*)
-    pkgs="apr apr-util sqlite lz4 utf8proc"
+    pkgs="apr apr-util sqlite lz4 utf8proc openssl zlib"
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
@@ -101,13 +104,34 @@ macos-*)
     brew install $pkgs
     brew uninstall subversion || :
     echo '::endgroup::'
-    with_apr="$(brew --prefix apr)/bin/apr-1-config"
-    with_apr_util="$(brew --prefix apr-util)/bin/apu-1-config"
+    prefix_apr="$(brew --prefix apr)"
+    prefix_apu="$(brew --prefix apr-util)"
+    with_apr="$prefix_apr/bin/apr-1-config"
+    with_apu="$prefix_apu/bin/apu-1-config"
+    with_serf="$prefix"
     with_apxs="$(brew --prefix httpd)/bin/apxs"
     with_sqlite="$(brew --prefix sqlite)"
-    sqlite_version="$(/usr/bin/sqlite3 :memory: 'SELECT sqlite_version()')"
-    opt_sqlite_compat_version="--enable-sqlite-compatibility-version=$sqlite_version"
+    sqlite_compat_ver="$(/usr/bin/sqlite3 :memory: 'SELECT sqlite_version()')"
     parallel=4
+    if [ -d "$workspace/serf" ]; then
+        echo '::group::serf'
+        python3 -m venv "$workspace/scons"
+        "$workspace/scons/bin/pip" install scons
+        scons="$workspace/scons/bin/scons"
+        pushd "$workspace/serf"
+        "$scons" -j "$parallel" \
+                 SOURCE_LAYOUT=no \
+                 APR_STATIC=no \
+                 "PREFIX=$prefix" \
+                 "LIBDIR=$prefix/lib" \
+                 "APR=$prefix_apr" \
+                 "APU=$prefix_apu" \
+                 "OPENSSL=$(brew --prefix openssl)" \
+                 "ZLIB=$(brew --prefix zlib)"
+        "$scons" install
+        popd
+    fi
+    echo '::endgroup::'
     ;;
 *)
     echo "Unsupported $MATRIX_OS" 1>&2
@@ -115,7 +139,6 @@ macos-*)
     ;;
 esac
 
-test -d "$prefix/lib" || mkdir -p "$prefix/lib"
 cflags=
 if [ "$target" = install ]; then
     ldflags="-Wl,-rpath,$prefix/lib"
@@ -218,11 +241,12 @@ fi
 
 echo '::group::./configure'
 ./configure --prefix="$prefix" \
-            --with-apr="$with_apr" --with-apr-util="$with_apr_util" \
-            --with-sqlite="$with_sqlite" $opt_sqlite_compat_version $opt_swig \
-            "$opt_py3c" "$opt_apxs" "$opt_javahl" "$opt_jdk" "$opt_junit" \
-            --without-doxygen --without-berkeley-db --without-gpg-agent \
-            --without-gnome-keyring --without-kwallet \
+            --with-apr="$with_apr" --with-apr-util="$with_apu" \
+            --with-serf="$with_serf" --with-sqlite="$with_sqlite" \
+            --enable-sqlite-compatibility-version="$sqlite_compat_ver" \
+            "$opt_swig" "$opt_py3c" "$opt_apxs" "$opt_javahl" "$opt_jdk" \
+            "$opt_junit" --without-doxygen --without-berkeley-db \
+            --without-gpg-agent --without-gnome-keyring --without-kwallet \
             "$opt_swig_python" "$opt_swig_perl" "$opt_swig_ruby" \
             CFLAGS="$cflags" LDFLAGS="$ldflags"
 echo '::endgroup::'
@@ -240,16 +264,8 @@ all)
     echo '::group::make all'
     time make -j"$parallel" all
     echo '::endgroup::'
-    case "$MATRIX_OS" in
-    ubuntu-*)
-        tasks='check svnserveautocheck davautocheck'
-        ;;
-    macos-*)
-        tasks='check svnserveautocheck'
-        ;;
-    esac
     rc=0
-    for task in $tasks; do
+    for task in check svnserveautocheck davautocheck; do
         echo "::group::make $task"
         time make $task PARALLEL="$parallel" APACHE_MPM=event || rc=1
         for i in tests.log fails.log; do
