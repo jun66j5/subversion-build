@@ -287,6 +287,10 @@ jobs:
 
 
   prepare:
+    if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
+            contains(fromJson(inputs.targets), 'swig-pl') ||
+            contains(fromJson(inputs.targets), 'swig-rb') ||
+            contains(fromJson(inputs.targets), 'javahl') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
 
