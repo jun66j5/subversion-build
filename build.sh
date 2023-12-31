@@ -219,7 +219,7 @@ esac
 
 if [ "$autogen" = y ]; then
     mkdir -p subversion/bindings/swig/proxy || :
-    echo '::group::make autogen.sh'
+    echo '::group::autogen.sh'
     /bin/sh autogen.sh
     echo '::endgroup::'
 fi
@@ -239,7 +239,7 @@ if [ "$use_installed_libs" = y ]; then
     echo '::endgroup::'
 fi
 
-echo '::group::./configure'
+echo '::group::configure'
 ./configure --prefix="$prefix" \
             --with-apr="$with_apr" --with-apr-util="$with_apu" \
             --with-serf="$with_serf" --with-sqlite="$with_sqlite" \
@@ -251,58 +251,48 @@ echo '::group::./configure'
             CFLAGS="$cflags" LDFLAGS="$ldflags"
 echo '::endgroup::'
 
+do_make() {
+    local rc=0
+    echo "::group::make $*"
+    time make "$@" || rc=$?
+    echo '::endgroup::'
+    return $rc
+}
+
 case "$target" in
 install)
-    echo '::group::make all'
-    time make -j"$parallel" all
-    echo '::endgroup::'
-    echo '::group::make install'
-    make install
-    echo '::endgroup::'
+    do_make -j"$parallel" all
+    do_make install
     ;;
 all)
-    echo '::group::make all'
-    time make -j"$parallel" all
-    echo '::endgroup::'
+    do_make -j"$parallel" all
     rc=0
     for task in check svnserveautocheck davautocheck; do
-        echo "::group::make $task"
-        time make $task PARALLEL="$parallel" APACHE_MPM=event || rc=1
+        do_make "$task" PARALLEL="$parallel" APACHE_MPM=event || rc=$?
         for i in tests.log fails.log; do
-            test -f "$i" && mv -v "$i" "$task-$i"
+            test -f "$i" && mv "$i" "$task-$i"
         done
-        echo '::endgroup::'
     done
     exit $rc
     ;;
 swig-pl)
-    echo '::group::make swig-pl'
-    time make -j"$parallel" swig-pl
-    echo '::endgroup::'
-    time make check-swig-pl TEST_VERBOSE=1
+    do_make -j"$parallel" swig-pl
+    do_make check-swig-pl TEST_VERBOSE=1
     ;;
 swig-py)
     if [ "$clean_swig_py" = y ]; then
-        echo '::group::make clean-swig-py'
         make clean-swig-py
-        echo '::endgroup::'
     fi
-    echo '::group::make swig-py'
-    time make -j"$parallel" swig-py
-    echo '::endgroup::'
+    do_make -j"$parallel" swig-py
     sed_repl Makefile -e 's#/tests/run_all\.py#& -v#'
-    time make check-swig-py
+    do_make check-swig-py
     ;;
 swig-rb)
-    echo '::group::make swig-rb'
-    time make -j"$parallel" swig-rb
-    echo '::endgroup::'
-    time make check-swig-rb SWIG_RB_TEST_VERBOSE=v
+    do_make -j"$parallel" swig-rb
+    do_make check-swig-rb SWIG_RB_TEST_VERBOSE=v
     ;;
 javahl)
-    echo '::group::make javahl'
-    time make javahl  # without -j option
-    echo '::endgroup::'
-    time make check-all-javahl
+    do_make javahl  # without -j option
+    do_make check-all-javahl
     ;;
 esac
