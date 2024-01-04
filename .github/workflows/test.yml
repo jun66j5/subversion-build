@@ -6,7 +6,7 @@ on:
     inputs:
       os:
         description: 'Runs on'
-        required: true
+        required: false
         type: string
         default: 'ubuntu-22.04 macos-12 windows-2022'
       targets:
@@ -36,87 +36,18 @@ jobs:
       dependencies: ${{ steps.convert.outputs.dependencies }}
 
     steps:
-      - name: Show inputs
-        env:
-          INPUTS: ${{ toJSON(inputs) }}
-        run: |
-          set -ex
-          {
-            echo '### Inputs:'
-            echo '```json'
-            echo "$INPUTS"
-            echo '```'
-          } >>"$GITHUB_STEP_SUMMARY"
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Convert inputs to json outputs
         id: convert
         env:
           INPUTS: ${{ toJSON(inputs) }}
-        run: |
-          set -ex
-          os_json() {
-            local name="$1"
-            local value="$(
-              cat "$tmpfile" |
-              jq -Mc '.os | split(" ") | map(select(startswith("'"$name"'-")))'
-            )"
-            echo "$name=$value"
-          }
-          targets_json() {
-            local name="$1"
-            local value="$(
-              cat "$tmpfile" |
-              jq -Mc '."'"$name"'" | split(" ") | map(select(.!=""))'
-            )"
-            echo "$name=$value"
-          }
-          svn_json() {
-            local name="$1"
-            local value="$(jq -r ".\"$name\"" <"$tmpfile")"
-            case "$value" in
-            apache/subversion@*|$GITHUB_REPOSITORY_OWNER/*@*)
-              value="$(
-                echo "$value" |
-                jq -RMc 'split("@") | {repository: .[0], ref: .[1]}'
-              )"
-              ;;
-            https://dist.apache.org/*/subversion-*.tar.bz2)
-              value="$(echo "$value" | jq -RMc '{archive: .}')"
-              ;;
-            *)
-              echo "Unrecognized inputs.subversion: '$value'" 1>&2
-              exit 1
-              ;;
-            esac
-            echo "$name=$value"
-          }
-          deps_json() {
-            local name="$1"
-            local value="$(
-              cat "$tmpfile" |
-              jq -Mc '."'"$name"'" | split(" ") | map(select(.!="") | split("=") | {(.[0]): .[1]}) | add'
-            )"
-            echo "$name=$value"
-          }
-          tmpfile="$(mktemp)"
-          echo "$INPUTS" >"$tmpfile"
-          {
-            os_json 'ubuntu'
-            os_json 'macos'
-            os_json 'windows'
-            targets_json 'targets'
-            svn_json 'subversion'
-            deps_json 'dependencies'
-          } >>"$GITHUB_OUTPUT"
-          {
-            echo '### Outputs:'
-            echo '```'
-            cat "$GITHUB_OUTPUT"
-            echo '```'
-          } >>"$GITHUB_STEP_SUMMARY"
+        run: ./convert.sh
 
       - name: Cache Subversion archives
-        if: ${{ fromJson(steps.convert.outputs.subversion).archive }}
+        if: ${{ steps.convert.outputs.subversion &&
+                fromJson(steps.convert.outputs.subversion).archive }}
         uses: actions/cache@v3
         with:
           path: arc
@@ -127,7 +58,8 @@ jobs:
             arc--
 
       - name: Cache junit jar file
-        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
+        if: ${{ steps.convert.outputs.targets &&
+                contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
         uses: actions/cache@v3
         with:
           path: arc
@@ -138,7 +70,8 @@ jobs:
             arc--
 
       - name: Download Subversion archives
-        if: ${{ fromJson(steps.convert.outputs.subversion).archive }}
+        if: ${{ steps.convert.outputs.subversion &&
+                fromJson(steps.convert.outputs.subversion).archive }}
         env:
           SVNARC: ${{ fromJson(steps.convert.outputs.subversion).archive }}
         run: |
@@ -147,7 +80,8 @@ jobs:
           wget -nv -N -P arc "$SVNARC" "${SVNARC%.tar.bz2}.zip"
 
       - name: Download junit jar file
-        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
+        if: ${{ steps.convert.outputs.targets &&
+                contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
         env:
           JUNIT_VER: ${{ fromJson(steps.convert.outputs.dependencies).junit }}
         run: |
