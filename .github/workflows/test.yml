@@ -90,8 +90,7 @@ jobs:
           test -d arc || mkdir arc
           wget -nv -N -P arc "$junit_url"
 
-
-  test-ubuntu:
+  ubuntu:
     if: ${{ needs.setup.outputs.ubuntu != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-ubuntu.yml
@@ -101,7 +100,7 @@ jobs:
       subversion: ${{ needs.setup.outputs.subversion }}
       dependencies: ${{ needs.setup.outputs.dependencies }}
 
-  test-macos:
+  macos:
     if: ${{ needs.setup.outputs.macos != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-macos.yml
@@ -111,7 +110,7 @@ jobs:
       subversion: ${{ needs.setup.outputs.subversion }}
       dependencies: ${{ needs.setup.outputs.dependencies }}
 
-  test-windows:
+  windows:
     if: ${{ needs.setup.outputs.windows != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-windows.yml
