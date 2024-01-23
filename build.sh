@@ -39,18 +39,15 @@ ubuntu-*)
         case "$MATRIX_PYVER" in
         2|2.*)
             pkgs="$pkgs python2.7-dev"
-            swig=swig3.0
             swig_python=/usr/bin/python2.7
             autogen=y
             clean_swig_py=y
             ;;
-        *)
-            swig=swig4.0
-            ;;
         esac
+        swig=swig3.0
         ;;
     swig-*)
-        swig=swig4.0
+        swig=swig3.0
         ;;
     all|install)
         pkgs="$pkgs apache2-dev libserf-dev"
