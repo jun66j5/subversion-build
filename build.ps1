@@ -1,4 +1,5 @@
 $svnarcurl = $Env:SVNARC
+$swig_ver = $Env:SWIG_VER
 $junit_ver = $Env:JUNIT_VER
 $LocalAppData = $Env:LocalAppData
 $ProgramData = $Env:ProgramData
@@ -12,6 +13,7 @@ $vcpkg_triplet = "$arch-windows-release"
 $vcpkg_dir = "$vcpkg_root\installed\$vcpkg_triplet"
 $vcpkg_dir_static = "$vcpkg_root\installed\$arch-windows-static"
 $deps_prefix = "$LocalAppData\deps"
+$swig_arc = "$workspace\arc\swigwin-$swig_ver.zip"
 $java_home = $Env:JAVA_HOME
 $junit_file = "$workspace\arc\junit-$junit_ver.jar"
 $python = $pythonLocation ? "$pythonLocation\python.exe" : 'python.exe'
@@ -168,20 +170,27 @@ switch -Exact ($args[0]) {
         $genmake_opts = @()
         $build_targets = @('__ALL__')
         $test_targets = @()
+        $use_swig = $false
         if ($input_targets -Contains 'swig-py') {
             $genmake_opts += "--with-py3c=$workspace\py3c"
             $build_targets += '__SWIG_PYTHON__'
             $test_targets += '--swig=python'
+            $use_swig = $true
         }
         if ($input_targets -Contains 'swig-pl') {
             $build_targets += '__SWIG_PERL__'
             $test_targets += '--swig=perl'
+            $use_swig = $true
         }
         if ($input_targets -Contains 'javahl') {
             $genmake_opts += @("--with-jdk=$java_home",
                                "--with-junit=$junit_file")
             $build_targets += @('__JAVAHL__', '__JAVAHL_TESTS__')
             $test_targets += '--javahl'
+        }
+        if ($use_swig) {
+            Expand-Archive -LiteralPath $swig_arc -DestinationPath $workspace
+            $genmake_opts += "--with-swig=$workspace\swigwin-$swig_ver"
         }
         $build_targets = $build_targets -Join ';'
     }

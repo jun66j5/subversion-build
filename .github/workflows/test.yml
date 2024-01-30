@@ -20,7 +20,7 @@ on:
         default: 'apache/subversion@trunk'
       dependencies:
         required: true
-        default: 'py3c=v1.4 apr=1.7.4 apr-util=1.6.3 httpd=2.4.58 serf=1.3.10 junit=4.13.2'
+        default: 'swig=3.0.12 py3c=v1.4 apr=1.7.4 apr-util=1.6.3 httpd=2.4.58 serf=1.3.10 junit=4.13.2'
 
 jobs:
   setup:
@@ -52,22 +52,34 @@ jobs:
         with:
           path: arc
           enableCrossOsArchive: true
-          key: arc--${{ fromJson(steps.convert.outputs.subversion).archive }}
+          key: arc-svn-${{ fromJson(steps.convert.outputs.subversion).archive }}
           restore-keys: |
-            arc--${{ fromJson(steps.convert.outputs.subversion).archive }}
-            arc--
+            arc-svn-${{ fromJson(steps.convert.outputs.subversion).archive }}
+            arc-svn-
 
-      - name: Cache junit jar file
-        if: ${{ steps.convert.outputs.targets &&
-                contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
+      - name: Cache SWIG archives
+        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'swig-pl') ||
+                contains(fromJson(steps.convert.outputs.targets), 'swig-py') ||
+                contains(fromJson(steps.convert.outputs.targets), 'swig-rb') }}
         uses: actions/cache@v4
         with:
           path: arc
           enableCrossOsArchive: true
-          key: arc--junit-${{ fromJson(steps.convert.outputs.dependencies).junit }}
+          key: arc-swig-${{ fromJson(steps.convert.outputs.dependencies).swig }}
           restore-keys: |
-            arc--junit-${{ fromJson(steps.convert.outputs.dependencies).junit }}
-            arc--
+            arc-swig-${{ fromJson(steps.convert.outputs.dependencies).swig }}
+            arc-swig-
+
+      - name: Cache junit jar file
+        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
+        uses: actions/cache@v4
+        with:
+          path: arc
+          enableCrossOsArchive: true
+          key: arc-junit-${{ fromJson(steps.convert.outputs.dependencies).junit }}
+          restore-keys: |
+            arc-junit-${{ fromJson(steps.convert.outputs.dependencies).junit }}
+            arc-junit-
 
       - name: Download Subversion archives
         if: ${{ steps.convert.outputs.subversion &&
@@ -77,11 +89,24 @@ jobs:
         run: |
           set -ex
           test -d arc || mkdir arc
-          wget -nv -N -P arc "$SVNARC" "${SVNARC%.tar.bz2}.zip"
+          wget nv -N -P arc "$SVNARC" "${SVNARC%.tar.bz2}.zip"
+
+      - name: Download SWIG archives
+        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'swig-pl') ||
+                contains(fromJson(steps.convert.outputs.targets), 'swig-py') ||
+                contains(fromJson(steps.convert.outputs.targets), 'swig-rb') }}
+        env:
+          SWIG_VER: ${{ fromJson(steps.convert.outputs.dependencies).swig }}
+        run: |
+          set -ex
+          prefix='https://prdownloads.sourceforge.net/swig'
+          swig_tar="$prefix/swig-$SWIG_VER.tar.gz"
+          swig_zip="$prefix/swigwin-$SWIG_VER.zip"
+          test -d arc || mkdir arc
+          wget -nv -N -P arc "$swig_tar" "$swig_zip"
 
       - name: Download junit jar file
-        if: ${{ steps.convert.outputs.targets &&
-                contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
+        if: ${{ contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
         env:
           JUNIT_VER: ${{ fromJson(steps.convert.outputs.dependencies).junit }}
         run: |

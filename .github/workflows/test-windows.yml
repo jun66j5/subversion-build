@@ -11,6 +11,7 @@ on:
 
 env:
   SVNARC: ${{ fromJson(inputs.subversion).archive }}
+  SWIG_VER: ${{ fromJson(inputs.dependencies).swig }}
   JUNIT_VER: ${{ fromJson(inputs.dependencies).junit }}
 
 jobs:
@@ -54,7 +55,7 @@ jobs:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ fromJson(inputs.subversion).archive }}
+        key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
     - name: Cache vcpkg files
       uses: actions/cache@v4
@@ -129,7 +130,18 @@ jobs:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ fromJson(inputs.subversion).archive }}
+        key: arc-svn-${{ fromJson(inputs.subversion).archive }}
+
+    - name: Cache SWIG archives
+      if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
+              contains(fromJson(inputs.targets), 'swig-pl') ||
+              contains(fromJson(inputs.targets), 'swig-rb') }}
+      uses: actions/cache@v4
+      with:
+        path: arc
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
+        key: arc-swig-${{ fromJson(inputs.dependencies).swig }}
 
     - name: Cache junit jar file
       if: ${{ contains(fromJson(inputs.targets), 'javahl') }}
@@ -138,7 +150,7 @@ jobs:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--junit-${{ fromJson(inputs.dependencies).junit }}
+        key: arc-junit-${{ fromJson(inputs.dependencies).junit }}
 
     - name: Cache vcpkg files
       uses: actions/cache@v4
@@ -232,7 +244,7 @@ jobs:
         path: arc
         fail-on-cache-miss: true
         enableCrossOsArchive: true
-        key: arc--${{ fromJson(inputs.subversion).archive }}
+        key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
     - name: Cache vcpkg files
       uses: actions/cache@v4

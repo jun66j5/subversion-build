@@ -5,6 +5,7 @@ set -exo pipefail
 target="$1"
 workspace="$GITHUB_WORKSPACE"
 prefix="$HOME/svn"
+swig_arc="$workspace/arc/swig-$SWIG_VER.tar.gz"
 with_swig=
 swig_python=python
 swig_perl=perl
@@ -26,7 +27,6 @@ if [ -n "$SVNARC" ]; then
 else
     autogen=y
 fi
-cd "$workspace/subversion"
 
 test -d "$prefix/lib" || mkdir -p "$prefix/lib"
 
@@ -44,20 +44,11 @@ ubuntu-*)
             clean_swig_py=y
             ;;
         esac
-        swig=swig3.0
-        ;;
-    swig-*)
-        swig=swig3.0
         ;;
     all|install)
         pkgs="$pkgs apache2-dev libserf-dev"
-        swig=
         ;;
     esac
-    if [ -n "$swig" -a "$autogen" = y ]; then
-        pkgs="$pkgs $swig"
-        with_swig="/usr/bin/$swig"
-    fi
     echo '::group::apt-get'
     sudo apt-get update -qq
     sudo apt-get install -qq -y $pkgs
@@ -72,7 +63,7 @@ ubuntu-*)
     parallel=3
     ;;
 macos-*)
-    pkgs="apr apr-util sqlite lz4 utf8proc openssl zlib"
+    pkgs="autoconf automake apr apr-util sqlite lz4 utf8proc openssl zlib"
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
@@ -81,20 +72,11 @@ macos-*)
             exit 1
             ;;
         esac
-        swig=swig
-        ;;
-    swig-*)
-        swig=swig
         ;;
     all|install)
         pkgs="$pkgs httpd"
-        swig=
         ;;
     esac
-    if [ -n "$swig" -a "$autogen" = y ]; then
-        pkgs="$pkgs $swig"
-        with_swig="$(brew --prefix "$swig")/bin/swig"
-    fi
     echo '::group::brew'
     brew update
     brew outdated $pkgs || brew upgrade $pkgs || :
@@ -126,15 +108,36 @@ macos-*)
                  "OPENSSL=$(brew --prefix openssl)" \
                  "ZLIB=$(brew --prefix zlib)"
         "$scons" install
+        echo '::endgroup::'
         popd
     fi
-    echo '::endgroup::'
     ;;
 *)
     echo "Unsupported $MATRIX_OS" 1>&2
     exit 1
     ;;
 esac
+
+if [ "$autogen" != y ]; then
+    opt_swig=
+elif [ -x "$prefix/bin/swig" ]; then
+    opt_swig="--with-swig=$prefix/bin/swig"
+elif [ -f "$swig_arc" ]; then
+    echo '::group::swig'
+    tar xzf "$swig_arc" -C "$workspace"
+    pushd "$workspace/swig-$SWIG_VER"
+    test -x configure || /bin/sh autogen.sh
+    ./configure --prefix="$prefix" --without-pcre
+    make -j"$parallel"
+    make install
+    popd
+    echo '::endgroup::'
+    opt_swig="--with-swig=$prefix/bin/swig"
+else
+    opt_swig='--without-swig'
+fi
+
+cd "$workspace/subversion"
 
 cflags=
 if [ "$target" = install ]; then
@@ -153,13 +156,6 @@ else
     opt_swig_python="PYTHON=none"
     opt_swig_perl="PERL=none"
     opt_swig_ruby="RUBY=none"
-fi
-if [ "$autogen" != y ]; then
-    opt_swig=
-elif [ -n "$with_swig" ]; then
-    opt_swig="--with-swig=$with_swig"
-else
-    opt_swig='--without-swig'
 fi
 opt_py3c="--without-py3c"
 opt_apxs="--without-apxs"
