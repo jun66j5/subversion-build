@@ -49,7 +49,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -57,7 +57,7 @@ jobs:
         key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - name: Cache vcpkg files
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~\AppData\Local\vcpkg\archives
@@ -65,7 +65,7 @@ jobs:
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Cache dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -124,7 +124,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -133,7 +133,7 @@ jobs:
 
     - name: Cache junit jar file
       if: ${{ contains(fromJson(inputs.targets), 'javahl') }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -141,7 +141,7 @@ jobs:
         key: arc--junit-${{ fromJson(inputs.dependencies).junit }}
 
     - name: Cache vcpkg files
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~\AppData\Local\vcpkg\archives
@@ -149,7 +149,7 @@ jobs:
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Cache dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -227,7 +227,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -235,7 +235,7 @@ jobs:
         key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - name: Cache vcpkg files
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~\AppData\Local\vcpkg\archives
@@ -246,7 +246,7 @@ jobs:
           ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-
 
     - name: Cache dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~\AppData\Local\deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}

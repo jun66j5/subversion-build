@@ -33,7 +33,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -63,7 +63,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -90,7 +90,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -113,7 +113,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -140,7 +140,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -165,7 +165,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -192,7 +192,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -216,7 +216,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -224,7 +224,7 @@ jobs:
         key: arc--${{ fromJson(inputs.subversion).archive }}
 
     - name: Cache junit jar file
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -249,7 +249,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -267,7 +267,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true
@@ -309,7 +309,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -327,7 +327,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: arc
         fail-on-cache-miss: true

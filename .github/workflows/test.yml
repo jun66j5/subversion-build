@@ -48,7 +48,7 @@ jobs:
       - name: Cache Subversion archives
         if: ${{ steps.convert.outputs.subversion &&
                 fromJson(steps.convert.outputs.subversion).archive }}
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: arc
           enableCrossOsArchive: true
@@ -60,7 +60,7 @@ jobs:
       - name: Cache junit jar file
         if: ${{ steps.convert.outputs.targets &&
                 contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: arc
           enableCrossOsArchive: true
