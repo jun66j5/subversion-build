@@ -64,7 +64,7 @@ jobs:
     - run: .github\build.ps1 core
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log-${{ matrix.os }}-core
@@ -149,7 +149,7 @@ jobs:
     - run: .github\build.ps1 bindings
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log-${{ matrix.os }}-bindings
@@ -237,7 +237,7 @@ jobs:
     - run: .github\build.ps1 prepare
 
     - name: Upload log files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log-${{ matrix.os }}-prepare
