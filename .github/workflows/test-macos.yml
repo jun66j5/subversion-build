@@ -134,7 +134,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
-        # perl-version: ['5.34', '5.22']
+        # perl-version: ['5', '5.22']
 
     env:
       MATRIX_OS: ${{ matrix.os }}
