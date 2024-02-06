@@ -72,7 +72,7 @@ jobs:
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.3.1
+      uses: microsoft/setup-msbuild@v2
 
     - run: .\build.ps1 core
 
@@ -186,7 +186,7 @@ jobs:
         java-version: ${{ matrix.java-version }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.3.1
+      uses: microsoft/setup-msbuild@v2
 
     - name: Checkout py3c
       uses: actions/checkout@v4
