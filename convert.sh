@@ -33,6 +33,9 @@ svn_json() {
     https://dist.apache.org/*/subversion-*.tar.bz2)
         value="$(echo "$value" | jq -RMc '{archive: .}')"
         ;;
+    [0-9]*.[0-9]*.[0-9]*)
+        value="$(echo "https://archive.apache.org/dist/subversion/subversion-$value.tar.bz2" | jq -RMc '{archive: .}')"
+        ;;
     *)
         echo "Unrecognized inputs.subversion: '$value'" 1>&2
         exit 1

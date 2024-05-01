@@ -15,7 +15,7 @@ on:
         type: string
         default: 'core swig-py swig-pl swig-rb javahl'
       subversion:
-        description: 'Subversion (owner/repo@ref or URL-to-tarball)'
+        description: 'Subversion (owner/repo@ref | version | URL-to-tarball)'
         required: true
         default: 'apache/subversion@trunk'
       dependencies:
