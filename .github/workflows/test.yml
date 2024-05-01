@@ -89,7 +89,7 @@ jobs:
         run: |
           set -ex
           test -d arc || mkdir arc
-          wget nv -N -P arc "$SVNARC" "${SVNARC%.tar.bz2}.zip"
+          wget -nv -N -P arc "$SVNARC" "${SVNARC%.tar.bz2}.zip"
 
       - name: Download SWIG archives
         if: ${{ contains(fromJson(steps.convert.outputs.targets), 'swig-pl') ||
