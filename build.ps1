@@ -240,6 +240,88 @@ if ($LASTEXITCODE) {
 }
 Write-Output '::endgroup::'
 
+Write-Output '::group::dist'
+$dist_dir = "$LocalAppData\dist"
+New-Item -Path "$dist_dir\bin" -ItemType Directory -Force
+Copy-Item -Path @("$deps_prefix\bin\libapr*.dll",
+                  "$deps_prefix\bin\apr_*.dll",
+                  "$vcpkg_dir\bin\libexpat.dll",
+                  "$vcpkg_dir\bin\iconv-*.dll",
+                  "$vcpkg_dir\bin\intl-*.dll",
+                  "$vcpkg_dir\bin\libcrypto-*.dll",
+                  "$vcpkg_dir\bin\libssl-*.dll",
+                  "$vcpkg_dir\bin\zlib1.dll",
+                  "Release\subversion\libsvn_*\*.dll") `
+          -Destination "$dist_dir\bin" `
+          -Verbose
+switch -Exact ($args[0]) {
+    'core' {
+        Copy-Item -Path "Release\subversion\svn*\*.exe" `
+                  -Destination "$dist_dir\bin" `
+                  -Verbose
+        New-Item -Path "$dist_dir\share\locale" -ItemType Directory -Force
+        Get-ChildItem "Release\mo" -Filter "*.mo" | ForEach-Object {
+            $locale = $_.BaseName
+            $locale_dir = "$dist_dir\share\locale\$locale\LC_MESSAGES"
+            New-Item -Path $locale_dir -ItemType Directory -Verbose
+            Copy-Item -Path $_.FullName -Destination "$locale_dir\subversion.mo" -Verbose
+        }
+    }
+    'bindings' {
+        if ($build_targets.Contains('__SWIG_PYTHON__')) {
+            $dist_pydir = "$dist_dir\python\Lib\site-packages"
+            New-Item -Path @("$dist_pydir\svn",
+                             "$dist_pydir\libsvn") `
+                     -ItemType Directory `
+                     -Force
+            Copy-Item -Path "subversion\bindings\swig\python\svn\*.py" `
+                      -Destination "$dist_pydir\svn" `
+                      -Verbose
+            Copy-Item -Path @("subversion\bindings\swig\python\*.py",
+                              "Release\subversion\bindings\swig\python\libsvn_swig_py\*.dll",
+                              "Release\subversion\bindings\swig\python\_*.pyd") `
+                      -Destination "$dist_pydir\libsvn" `
+                      -Verbose
+            & $python -m compileall $dist_pydir
+        }
+        if ($build_targets.Contains('__SWIG_PERL__')) {
+            $dist_pldir = "$dist_dir\perl\site\lib"
+            Copy-Item -Path "Release\subversion\bindings\swig\perl\libsvn_swig_perl\*.dll" `
+                      -Destination "$dist_dir\bin" `
+                      -Verbose
+            New-Item -Path @("$dist_pldir\SVN", "$dist_pldir\auto\SVN") `
+                     -ItemType Directory `
+                     -Force
+            Copy-Item -Path "subversion\bindings\swig\perl\native\*.pm" `
+                      -Destination "$dist_pldir\SVN" `
+                      -Verbose
+            foreach ($name in @("_Client", "_Core", "_Delta", "_Fs", "_Ra",
+                                "_Repos", "_Wc"))
+            {
+                $dir = "$dist_pldir\auto\SVN\$name"
+                New-Item -Path $dir -ItemType Directory -Force
+                Copy-Item -Path "Release\subversion\bindings\swig\perl\native\$name.dll" `
+                          -Destination $dir `
+                          -Verbose
+            }
+        }
+        if ($build_targets.Contains('__SWIG_RUBY__')) {
+            $dist_rbdir = "$dist_dir\ruby\lib"
+            New-Item -Path @("$dist_rbdir\svn", "$dist_rbdir\svn\ext") `
+                     -ItemType Directory `
+                     -Force
+            Copy-Item -Path "subversion\bindings\swig\ruby\svn\*.rb" `
+                      -Destination "$dist_rbdir\svn" `
+                      -Verbose
+            Copy-Item -Path @("Release\subversion\bindings\swig\ruby\libsvn_swig_ruby\*.dll",
+                              "Release\subversion\bindings\swig\ruby\*.so") `
+                      -Destination "$dist_rbdir\svn\ext" `
+                      -Verbose
+        }
+    }
+}
+Write-Output '::endgroup::'
+
 $rc = 0
 foreach ($item in $test_targets) {
     Write-Output "::group::win-tests.py $item"

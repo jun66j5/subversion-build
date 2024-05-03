@@ -85,6 +85,13 @@ jobs:
           subversion\*.log
           subversion\Release\*.log
 
+    - name: Upload binary files
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dist-${{ matrix.os }}-core
+        path: ~\AppData\Local\dist
+
 
   bindings:
     if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
@@ -206,6 +213,13 @@ jobs:
         name: log-${{ matrix.os }}-bindings
         path: |
           subversion\*.log
+
+    - name: Upload binary files
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dist-${{ matrix.os }}-bindings
+        path: ~\AppData\Local\dist
 
 
   prepare:
