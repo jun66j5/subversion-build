@@ -3,4 +3,4 @@ sqlite3:x64-windows-static
 expat
 pcre
 openssl
-gettext
+gettext[tools]

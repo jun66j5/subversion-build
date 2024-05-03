@@ -201,6 +201,8 @@ if (!$svnarcurl) {
     & svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
 }
 
+$Env:PATH = "$deps_prefix\bin;$vcpkg_dir\bin;$vcpkg_dir\tools\gettext\bin;$($Env:PATH)"
+
 Write-Output '::group::gen-make.py'
 & $python gen-make.py `
           --vsnet-version=2019 `
@@ -238,7 +240,6 @@ if ($LASTEXITCODE) {
 }
 Write-Output '::endgroup::'
 
-$Env:PATH = "$deps_prefix\bin;$vcpkg_dir\bin;$($Env:PATH)"
 $rc = 0
 foreach ($item in $test_targets) {
     Write-Output "::group::win-tests.py $item"
