@@ -240,6 +240,52 @@ if ($LASTEXITCODE) {
 }
 Write-Output '::endgroup::'
 
+Write-Output '::group::dist'
+$dist_dir = "$LocalAppData\dist"
+New-Item -Path "$dist_dir\bin" -ItemType Directory -Force
+Copy-Item -Path @("$deps_prefix\bin\libapr*.dll",
+                  "$deps_prefix\bin\apr_*.dll",
+                  "$vcpkg_dir\bin\libexpat.dll",
+                  "$vcpkg_dir\bin\iconv-*.dll",
+                  "$vcpkg_dir\bin\intl-*.dll",
+                  "$vcpkg_dir\bin\libcrypto-*.dll",
+                  "$vcpkg_dir\bin\libssl-*.dll",
+                  "$vcpkg_dir\bin\zlib1.dll",
+                  "Release\subversion\libsvn_*\*.dll") `
+          -Destination "$dist_dir\bin" `
+          -Verbose
+switch -Exact ($args[0]) {
+    'core' {
+        Copy-Item -Path "Release\subversion\svn*\*.exe" `
+                  -Destination "$dist_dir\bin" `
+                  -Verbose
+        New-Item -Path "$dist_dir\share\locale" -ItemType Directory -Force
+        Get-ChildItem "Release\mo" -Filter "*.mo" | ForEach-Object {
+            $locale = $_.BaseName
+            $locale_dir = "$dist_dir\share\locale\$locale\LC_MESSAGES"
+            New-Item -Path $locale_dir -ItemType Directory -Verbose
+            Copy-Item -Path $_.FullName -Destination "$locale_dir\subversion.mo" -Verbose
+        }
+    }
+    'bindings' {
+        $dist_libpy_dir = "$dist_dir\lib\python"
+        New-Item -Path @("$dist_libpy_dir\svn",
+                         "$dist_libpy_dir\libsvn") `
+                 -ItemType Directory `
+                 -Force
+        Copy-Item -Path "subversion\bindings\swig\python\svn\*.py" `
+                  -Destination "$dist_libpy_dir\svn" `
+                  -Verbose
+        Copy-Item -Path @("subversion\bindings\swig\python\*.py",
+                          "Release\subversion\bindings\swig\python\libsvn_swig_py\*.dll",
+                          "Release\subversion\bindings\swig\python\_*.pyd") `
+                  -Destination "$dist_libpy_dir\libsvn" `
+                  -Verbose
+        & $python -m compileall $dist_libpy_dir
+    }
+}
+Write-Output '::endgroup::'
+
 $rc = 0
 foreach ($item in $test_targets) {
     Write-Output "::group::win-tests.py $item"
