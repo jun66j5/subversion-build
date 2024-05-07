@@ -56,10 +56,12 @@ ubuntu-*)
     echo '::endgroup::'
     with_apr=/usr/bin/apr-1-config
     with_apu=/usr/bin/apu-1-config
-    with_serf=
+    with_serf=yes
     with_apxs=/usr/bin/apxs2
     with_sqlite=
     sqlite_compat_ver=
+    with_lz4=yes
+    with_utf8proc=yes
     parallel=3
     ;;
 macos-*)
@@ -91,6 +93,8 @@ macos-*)
     with_apxs="$(brew --prefix httpd)/bin/apxs"
     with_sqlite="$(brew --prefix sqlite)"
     sqlite_compat_ver="$(/usr/bin/sqlite3 :memory: 'SELECT sqlite_version()')"
+    with_lz4="$(brew --prefix lz4)"
+    with_utf8proc="$(brew --prefix utf8proc)"
     parallel=4
     if [ -d "$workspace/serf" ]; then
         echo '::group::serf'
@@ -237,6 +241,7 @@ echo '::group::configure'
             --with-apr="$with_apr" --with-apr-util="$with_apu" \
             --with-serf="$with_serf" --with-sqlite="$with_sqlite" \
             --enable-sqlite-compatibility-version="$sqlite_compat_ver" \
+            --with-lz4="$with_lz4" --with-utf8proc="$with_utf8proc" \
             "$opt_swig" "$opt_py3c" "$opt_apxs" "$opt_javahl" "$opt_jdk" \
             "$opt_junit" --without-doxygen --without-berkeley-db \
             --without-gpg-agent --without-gnome-keyring --without-kwallet \
