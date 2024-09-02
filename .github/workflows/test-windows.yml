@@ -47,6 +47,7 @@ jobs:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
+        ssh-key: ${{ secrets.SSH_IDENTITY_FILE }}
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
@@ -129,6 +130,7 @@ jobs:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
+        ssh-key: ${{ secrets.SSH_IDENTITY_FILE }}
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
@@ -250,6 +252,7 @@ jobs:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
         path: subversion
+        ssh-key: ${{ secrets.SSH_IDENTITY_FILE }}
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
