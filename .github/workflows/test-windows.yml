@@ -13,6 +13,7 @@ env:
   SVNARC: ${{ fromJson(inputs.subversion).archive }}
   SWIG_VER: ${{ fromJson(inputs.dependencies).swig }}
   JUNIT_VER: ${{ fromJson(inputs.dependencies).junit }}
+  PYTHONUTF8: '1'
 
 jobs:
 
