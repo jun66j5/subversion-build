@@ -119,6 +119,7 @@ jobs:
     if: ${{ needs.setup.outputs.ubuntu != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-ubuntu.yml
+    secrets: inherit
     with:
       targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.ubuntu }}
@@ -129,6 +130,7 @@ jobs:
     if: ${{ needs.setup.outputs.macos != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-macos.yml
+    secrets: inherit
     with:
       targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.macos }}
@@ -139,6 +141,7 @@ jobs:
     if: ${{ needs.setup.outputs.windows != '[]' }}
     needs: setup
     uses: ./.github/workflows/test-windows.yml
+    secrets: inherit
     with:
       targets: ${{ needs.setup.outputs.targets }}
       os: ${{ needs.setup.outputs.windows }}
