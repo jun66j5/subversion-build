@@ -1,6 +1,8 @@
 ---
 name: Run tests
 
+run-name: "Run tests: ${{ toJSON(inputs) }}"
+
 on:
   workflow_dispatch:
     inputs:
