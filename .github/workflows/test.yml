@@ -1,11 +1,16 @@
 ---
 name: Run tests
 
-run-name: "Run tests: ${{ toJSON(inputs) }}"
+run-name: "${{ inputs.name }}: ${{ toJSON(inputs) }}"
 
 on:
   workflow_dispatch:
     inputs:
+      name:
+        description: 'Name'
+        required: true
+        type: string
+        default: 'Run tests'
       os:
         description: 'Runs on'
         required: false
