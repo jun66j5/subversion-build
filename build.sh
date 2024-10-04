@@ -65,7 +65,8 @@ ubuntu-*)
     parallel=3
     ;;
 macos-*)
-    pkgs="autoconf automake apr apr-util sqlite lz4 utf8proc openssl zlib"
+    pkgs="autoconf automake libtool apr apr-util sqlite lz4 utf8proc openssl
+          zlib"
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
@@ -82,7 +83,7 @@ macos-*)
     echo '::group::brew'
     brew update -q
     brew install -q $pkgs
-    brew uninstall -q subversion || :
+    brew uninstall -q subversion 2>/dev/null || :
     echo '::endgroup::'
     prefix_apr="$(brew --prefix apr)"
     prefix_apu="$(brew --prefix apr-util)"
