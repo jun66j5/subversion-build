@@ -80,10 +80,9 @@ macos-*)
         ;;
     esac
     echo '::group::brew'
-    brew update
-    brew outdated $pkgs || brew upgrade $pkgs || :
-    brew install $pkgs
-    brew uninstall subversion || :
+    brew update -q
+    brew install -q $pkgs
+    brew uninstall -q subversion || :
     echo '::endgroup::'
     prefix_apr="$(brew --prefix apr)"
     prefix_apu="$(brew --prefix apr-util)"
