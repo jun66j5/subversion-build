@@ -93,10 +93,13 @@ jobs:
                 fromJson(steps.convert.outputs.subversion).archive }}
         env:
           SVNARC: ${{ fromJson(steps.convert.outputs.subversion).archive }}
+          SVNARC_NETRC: ${{ secrets.SVNARC_NETRC }}
         run: |
           set -ex
+          /bin/sh -c 'data="$SVNARC_NETRC"; test -n "$data" && echo -n "$data" | base64 -d - >"$HOME/.netrc"'
           test -d arc || mkdir arc
           wget -nv -N -P arc "$SVNARC" "${SVNARC%.tar.bz2}.zip"
+          rm -rf "$HOME/.netrc"
 
       - name: Download SWIG archives
         if: ${{ contains(fromJson(steps.convert.outputs.targets), 'swig-pl') ||
