@@ -30,7 +30,7 @@ svn_json() {
             jq -RMc 'split("@") | {repository: .[0], ref: .[1]}'
         )"
         ;;
-    https://dist.apache.org/*/subversion-*.tar.bz2)
+    https://dist.apache.org/*/subversion-*.tar.bz2|https://svn.apache.org/*/subversion-*.tar.bz2)
         value="$(echo "$value" | jq -RMc '{archive: .}')"
         ;;
     [0-9]*.[0-9]*.[0-9]*)
