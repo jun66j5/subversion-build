@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 15
 
     strategy:
+      max-parallel: 3
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
@@ -86,6 +87,7 @@ jobs:
     timeout-minutes: 30
 
     strategy:
+      max-parallel: 3
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
@@ -137,6 +139,7 @@ jobs:
     timeout-minutes: 15
 
     strategy:
+      max-parallel: 3
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
@@ -188,6 +191,7 @@ jobs:
     timeout-minutes: 15
 
     strategy:
+      max-parallel: 3
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
