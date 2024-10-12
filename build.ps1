@@ -29,6 +29,16 @@ if ($svnarcurl) {
 }
 Push-Location -LiteralPath "$workspace\subversion"
 
+if (($input_targets -Contains 'swig-rb') -and
+    !(Select-String -Path win-tests.py -Quiet 'collector=dir'))
+{
+    Write-Warning 'SKIP: swig-rb'
+    $input_targets = $input_targets | ? { $_ -ne 'swig-rb' }
+    $Env:PATH = ($Env:PATH.Split(';') | `
+                 ? { !(Test-Path -LiteralPath "$_\ruby.exe") } `
+                ) -Join ';'
+}
+
 Write-Output '::group::vcpkg'
 Push-Location -LiteralPath $vcpkg_root
 Copy-Item -LiteralPath "triplets\$arch-windows.cmake" `
@@ -176,6 +186,11 @@ switch -Exact ($args[0]) {
         if ($input_targets -Contains 'swig-pl') {
             $build_targets += '__SWIG_PERL__'
             $test_targets += '--swig=perl'
+            $use_swig = $true
+        }
+        if ($input_targets -Contains 'swig-rb') {
+            $build_targets += '__SWIG_RUBY__'
+            $test_targets += '--swig=ruby'
             $use_swig = $true
         }
         if ($input_targets -Contains 'javahl') {

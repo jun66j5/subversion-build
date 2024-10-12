@@ -98,6 +98,7 @@ jobs:
   bindings:
     if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
             contains(fromJson(inputs.targets), 'swig-pl') ||
+            contains(fromJson(inputs.targets), 'swig-rb') ||
             contains(fromJson(inputs.targets), 'javahl') }}
     runs-on: ${{ matrix.os }}
     needs: prepare
@@ -109,6 +110,7 @@ jobs:
         os: ${{ fromJson(inputs.os) }}
         python-version: ['3.x']
         perl-version: ['5']
+        ruby-version: ['mswin']
         java-version: ['21']
 
     defaults:
@@ -186,6 +188,12 @@ jobs:
       uses: shogo82148/actions-setup-perl@v1
       with:
         perl-version: ${{ matrix.perl-version }}
+
+    - name: Set up Ruby ${{ matrix.ruby-version }}
+      if: ${{ contains(fromJson(inputs.targets), 'swig-rb') }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
 
     - name: Set up Java ${{ matrix.java-version }}
       if: ${{ contains(fromJson(inputs.targets), 'javahl') }}
