@@ -178,6 +178,16 @@ switch -Exact ($args[0]) {
             $test_targets += '--swig=perl'
             $use_swig = $true
         }
+        if ($input_targets -Contains 'swig-rb') {
+            if (Select-String -Path win-tests.py -Quiet collector=dir) {
+                $build_targets += '__SWIG_RUBY__'
+                $test_targets += '--swig=ruby'
+                $use_swig = $true
+            }
+            else {
+                Write-Warning 'SKIP: swig-rb'
+            }
+        }
         if ($input_targets -Contains 'javahl') {
             $genmake_opts += @("--with-jdk=$java_home",
                                "--with-junit=$junit_file")
