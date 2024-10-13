@@ -18,6 +18,8 @@ $java_home = $Env:JAVA_HOME
 $junit_file = "$workspace\arc\junit-$junit_ver.jar"
 $python = $pythonLocation ? "$pythonLocation\python.exe" : 'python.exe'
 
+$Env:PATH = "$vcpkg_root;$($Env:PATH)"
+
 if ($svnarcurl) {
     $svnarcurl = $svnarcurl -Replace '\.tar\.[a-z0-9]+$', '.zip'
     $svnarcdir = "$workspace\arc"
