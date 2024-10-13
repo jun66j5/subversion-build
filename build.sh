@@ -287,6 +287,7 @@ swig-py)
     ;;
 swig-rb)
     do_make -j"$parallel" swig-rb
+    sed_repl Makefile -e 's#/test/run-test\.rb #&--no-use-color #'
     do_make check-swig-rb SWIG_RB_TEST_VERBOSE=v
     ;;
 javahl)

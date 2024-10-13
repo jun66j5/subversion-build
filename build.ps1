@@ -320,6 +320,9 @@ switch -Exact ($args[0]) {
 }
 Write-Output '::endgroup::'
 
+& "C:\Program Files\Git\usr\bin\sed.exe" `
+    -i -e "s|'run-test.rb'),|& '--no-use-color',|g" `
+    win-tests.py
 $rc = 0
 foreach ($item in $test_targets) {
     Write-Output "::group::win-tests.py $item"
