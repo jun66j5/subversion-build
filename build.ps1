@@ -31,8 +31,6 @@ Push-Location -LiteralPath "$workspace\subversion"
 
 Write-Output '::group::vcpkg'
 Push-Location -LiteralPath $vcpkg_root
-& git fetch --depth=1 origin
-& git checkout origin/master
 Copy-Item -LiteralPath "triplets\$arch-windows.cmake" `
           -Destination "triplets\$vcpkg_triplet.cmake"
 Add-Content -LiteralPath "triplets\$vcpkg_triplet.cmake" `
@@ -40,7 +38,6 @@ Add-Content -LiteralPath "triplets\$vcpkg_triplet.cmake" `
 Pop-Location
 $vcpkg_opts = @("--triplet=$vcpkg_triplet")
 $vcpkg_targets = Get-Content -LiteralPath "$workspace\vcpkg.txt"
-& vcpkg $vcpkg_opts update
 & vcpkg $vcpkg_opts install $vcpkg_targets
 if ($LASTEXITCODE) {
     Write-Error "vcpkg install exited with $LASTEXITCODE"
