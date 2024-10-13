@@ -194,7 +194,9 @@ switch -Exact ($args[0]) {
 
 if (!$svnarcurl) {
     New-Item -Force -ItemType Directory -Path "subversion\bindings\swig\proxy"
-    & svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
+    if (-Not (Select-String -Path build.conf -Quiet '/sqlite3wrapper.c')) {
+        & svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
+    }
 }
 
 $Env:PATH = "$deps_prefix\bin;$vcpkg_dir\bin;$vcpkg_dir\tools\gettext\bin;$($Env:PATH)"
