@@ -8,7 +8,6 @@ $input_targets = $Env:INPUT_TARGETS -Split ' '
 $arch = 'x64'
 $pythonLocation = $Env:pythonLocation
 $vcpkg_root = $Env:VCPKG_INSTALLATION_ROOT
-$vcpkg_downloads = "$LocalAppData\vcpkg\downloads"
 $vcpkg_triplet = "$arch-windows-release"
 $vcpkg_dir = "$vcpkg_root\installed\$vcpkg_triplet"
 $vcpkg_dir_static = "$vcpkg_root\installed\$arch-windows-static"
@@ -31,7 +30,6 @@ if ($svnarcurl) {
 Push-Location -LiteralPath "$workspace\subversion"
 
 Write-Output '::group::vcpkg'
-New-Item -Force -ItemType Directory -Path $vcpkg_downloads
 Push-Location -LiteralPath $vcpkg_root
 & git fetch --depth=1 origin
 & git checkout origin/master
@@ -40,8 +38,7 @@ Copy-Item -LiteralPath "triplets\$arch-windows.cmake" `
 Add-Content -LiteralPath "triplets\$vcpkg_triplet.cmake" `
             -Value 'set(VCPKG_BUILD_TYPE release)'
 Pop-Location
-$vcpkg_opts = @("--downloads-root=$vcpkg_downloads",
-                "--triplet=$vcpkg_triplet")
+$vcpkg_opts = @("--triplet=$vcpkg_triplet")
 $vcpkg_targets = Get-Content -LiteralPath "$workspace\vcpkg.txt"
 & vcpkg $vcpkg_opts update
 & vcpkg $vcpkg_opts install $vcpkg_targets
