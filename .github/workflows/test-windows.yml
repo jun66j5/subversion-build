@@ -198,6 +198,7 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Checkout py3c
+      if: ${{ contains(fromJson(inputs.targets), 'swig-py') }}
       uses: actions/checkout@v4
       with:
         repository: encukou/py3c
