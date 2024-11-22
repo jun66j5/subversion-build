@@ -38,6 +38,46 @@ if (($input_targets -Contains 'swig-rb') -and
                  ? { !(Test-Path -LiteralPath "$_\ruby.exe") } `
                 ) -Join ';'
 }
+$rc = 0
+if ($input_targets -Contains 'swig-py') {
+    Write-Output '::group::check swig-py'
+    Write-Output "PATH: $($Env:PATH)"
+    Get-Command python | Format-List
+    & where.exe python
+    & python.exe --version
+    if ($LASTEXITCODE) {
+        $rc = 1
+    }
+    Write-Output '::endgroup::'
+}
+if ($input_targets -Contains 'swig-pl') {
+    Write-Output '::group::check swig-pl'
+    $paths = $Env:PATH.Split(';')
+    $Env:PATH = (($paths | Select-String '^C:\\hostedtoolcache\\' `
+                  | ? { Test-Path -LiteralPath "$_\perl.exe" } `
+                 ) + $paths) -Join ';'
+    Get-Command perl | Format-List
+    & where.exe perl
+    & perl.exe --version
+    if ($LASTEXITCODE) {
+        $rc = 1
+    }
+    Write-Output '::endgroup::'
+}
+if ($input_targets -Contains 'swig-rb') {
+    Write-Output '::group::check swig-rb'
+    Write-Output "PATH: $($Env:PATH)"
+    Get-Command ruby | Format-List
+    & where.exe ruby
+    & ruby.exe --version
+    if ($LASTEXITCODE) {
+        $rc = 1
+    }
+    Write-Output '::endgroup::'
+}
+if ($rc -ne 0) {
+    exit $rc
+}
 
 Write-Output '::group::vcpkg'
 Push-Location -LiteralPath $vcpkg_root
