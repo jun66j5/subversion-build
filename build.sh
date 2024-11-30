@@ -63,6 +63,7 @@ ubuntu-*)
     with_lz4=yes
     with_utf8proc=yes
     parallel=3
+    apache_mpm=event
     ;;
 macos-*)
     pkgs="autoconf automake libtool apr apr-util sqlite lz4 utf8proc openssl
@@ -96,6 +97,7 @@ macos-*)
     with_lz4="$(brew --prefix lz4)"
     with_utf8proc="$(brew --prefix utf8proc)"
     parallel=4
+    apache_mpm=prefork
     if [ -d "$workspace/serf" ]; then
         echo '::group::serf'
         python3 -m venv "$workspace/scons"
@@ -266,7 +268,7 @@ all)
     do_make -j"$parallel" all
     rc=0
     for task in check svnserveautocheck davautocheck; do
-        do_make "$task" PARALLEL="$parallel" APACHE_MPM=event || rc=$?
+        do_make "$task" PARALLEL="$parallel" APACHE_MPM="$apache_mpm" || rc=$?
         for i in tests.log fails.log; do
             test -f "$i" && mv "$i" "$task-$i"
         done
