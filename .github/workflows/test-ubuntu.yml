@@ -31,6 +31,10 @@ jobs:
         if-swig-4:
           - ${{ startsWith(fromJson(inputs.dependencies).swig, '4.') }}
         exclude:
+          - {os: ubuntu-24.04, python-version: '3.7'}
+          - {os: ubuntu-24.04, python-version: '3.6'}
+          - {os: ubuntu-24.04, python-version: '3.5'}
+          - {os: ubuntu-24.04, python-version: '2.7'}
           - {os: ubuntu-22.04, python-version: '3.6'}
           - {os: ubuntu-22.04, python-version: '3.5'}
           - {python-version: '2.7', if-swig-4: true}
