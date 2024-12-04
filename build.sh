@@ -45,6 +45,9 @@ ubuntu-*)
             ;;
         esac
         ;;
+    swig-pl)
+        pkgs="$pkgs libnsl-dev"
+        ;;
     all|install)
         pkgs="$pkgs apache2-dev libserf-dev"
         ;;
