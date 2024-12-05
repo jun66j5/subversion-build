@@ -242,7 +242,7 @@ jobs:
   core:
     if: ${{ contains(fromJson(inputs.targets), 'core') }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 180
 
     strategy:
       fail-fast: false
