@@ -269,7 +269,17 @@ all)
     do_make -j"$parallel" all
     rc=0
     for task in check svnserveautocheck davautocheck; do
-        do_make "$task" PARALLEL="$parallel" APACHE_MPM=event || rc=$?
+        case "$task" in
+        check)
+            do_make "$task" PARALLEL="$parallel" || rc=$?
+            ;;
+        svnserveautocheck)
+            do_make "$task" PARALLEL="$parallel" THREADED=1 || rc=$?
+            ;;
+        davautocheck)
+            do_make "$task" PARALLEL="$parallel" APACHE_MPM=event || rc=$?
+            ;;
+        esac
         for i in tests.log fails.log; do
             test -f "$i" && mv "$i" "$task-$i"
         done
