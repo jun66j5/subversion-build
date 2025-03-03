@@ -102,7 +102,7 @@ jobs:
             contains(fromJson(inputs.targets), 'javahl') }}
     runs-on: ${{ matrix.os }}
     needs: prepare
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     strategy:
       fail-fast: false
