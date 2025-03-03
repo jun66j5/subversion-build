@@ -15,7 +15,7 @@ on:
         description: 'Runs on'
         required: false
         type: string
-        default: 'ubuntu-22.04 macos-14 windows-2022'
+        default: 'ubuntu-24.04 macos-14 windows-2022'
       targets:
         description: 'Test targets'
         required: false
