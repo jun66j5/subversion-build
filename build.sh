@@ -65,7 +65,7 @@ ubuntu-*)
     sqlite_compat_ver=
     with_lz4=yes
     with_utf8proc=yes
-    parallel=3
+    parallel="$(expr "$(nproc)" '*' 2)"
     ;;
 macos-*)
     pkgs="autoconf automake libtool apr apr-util sqlite lz4 utf8proc openssl
@@ -98,7 +98,7 @@ macos-*)
     sqlite_compat_ver="$(/usr/bin/sqlite3 :memory: 'SELECT sqlite_version()')"
     with_lz4="$(brew --prefix lz4)"
     with_utf8proc="$(brew --prefix utf8proc)"
-    parallel=4
+    parallel="$(expr "$(sysctl -n hw.logicalcpu)" '*' 2)"
     if [ -d "$workspace/serf" ]; then
         echo '::group::serf'
         python3 -m venv "$workspace/scons"
