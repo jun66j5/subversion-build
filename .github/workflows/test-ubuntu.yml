@@ -1,6 +1,8 @@
 ---
 name: Run tests on Ubuntu
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:
