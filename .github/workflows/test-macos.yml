@@ -27,6 +27,15 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.os) }}
         python-version: ['3.14-dev', '3.13', '3.12', '3.11']
+        swig-py3:
+          - ${{ fromJson(inputs.dependencies).swig >= '3.' }}
+        exclude:
+          - {swig-py3: false, python-version: '3.14-dev'}
+          - {swig-py3: false, python-version: '3.13'}
+          - {swig-py3: false, python-version: '3.12'}
+          - {swig-py3: false, python-version: '3.11'}
+
+    name: "swig-py (${{ matrix.os }}, ${{ matrix.python-version }})"
 
     env:
       MATRIX_OS: ${{ matrix.os }}
