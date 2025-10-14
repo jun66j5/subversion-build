@@ -253,6 +253,8 @@ if (!$svnarcurl) {
         & svn diff -c1908545 https://svn.apache.org/repos/asf/subversion/trunk/ | & git apply -p0 -R -
     }
 }
+# Workaround for expat.h in expat 2.7.2+
+& sed -i -e 's/#define\\>/#\\\\s*define/' build/generator/gen_win_dependencies.py
 
 $Env:PATH = "$deps_prefix\bin;$vcpkg_dir\bin;$vcpkg_dir\tools\gettext\bin;$($Env:PATH)"
 
