@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
-        python-version: ['3.14-dev', '3.13', '3.12', '3.11', '3.10', '3.9', '3.8', '3.7', '3.6', '3.5', '2.7']
+        python-version: ['3.14', '3.13', '3.12', '3.11', '3.10', '3.9', '3.8', '3.7', '3.6', '3.5', '2.7']
         swig-py3:
           - ${{ fromJson(inputs.dependencies).swig >= '3.' }}
         swig-py2:
@@ -39,7 +39,7 @@ jobs:
           - {os: ubuntu-24.04, python-version: '2.7'}
           - {os: ubuntu-22.04, python-version: '3.6'}
           - {os: ubuntu-22.04, python-version: '3.5'}
-          - {swig-py3: false, python-version: '3.14-dev'}
+          - {swig-py3: false, python-version: '3.14'}
           - {swig-py3: false, python-version: '3.13'}
           - {swig-py3: false, python-version: '3.12'}
           - {swig-py3: false, python-version: '3.11'}
