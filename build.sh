@@ -11,6 +11,35 @@ swig_python=python
 swig_perl=perl
 swig_ruby=ruby
 clean_swig_py=n
+core_dir=/cores
+
+on_exit() {
+    case "$MATRIX_OS" in
+    ubuntu-*)
+        for i in "$core_dir"/*; do
+            test -e "$i" || continue
+            execfn="$(gdb -q -c "$core" -ex 'info auxv' -ex quit | \
+                      sed -n '/AT_EXECFN/ { s/.*"\([^"]*\)".*/\1/; p; q }')"
+            test -n "$execfn" -a -e "$execfn" || execfn=-c
+            echo "::group::$i"
+            gdb -q "$execfn" "$i" \
+                -ex 'set pagination off' \
+                -ex 'info proc mappings' \
+                -ex 'thread apply all bt full' \
+                -ex 'quit'
+            echo '::endgroup::'
+        done
+        ;;
+    macos-*)
+        for i in "$HOME/Library/Logs/DiagnosticReports"/*.crash; do
+            test -e "$i" || continue
+            echo "::group::$i"
+            cat "$i"
+            echo '::endgroup::'
+        done
+        ;;
+    esac
+}
 
 sed_repl() {
     local orig="$1"
@@ -18,6 +47,8 @@ sed_repl() {
     shift
     sed "$@" "$orig" >"$new" && mv "$new" "$orig"
 }
+
+trap on_exit EXIT
 
 if [ -n "$SVNARC" ]; then
     autogen=n
@@ -32,8 +63,11 @@ test -d "$prefix/lib" || mkdir -p "$prefix/lib"
 
 case "$MATRIX_OS" in
 ubuntu-*)
+    test -d "$core_dir" || sudo mkdir -m 0777 "$core_dir"
+    sudo sysctl -w "kernel.core_pattern=$core_dir/%t.%e.%p.%h"
+    ulimit -c unlimited
     pkgs="build-essential libtool libtool-bin libapr1-dev libaprutil1-dev
-          libsqlite3-dev liblz4-dev libutf8proc-dev libserf-dev"
+          libsqlite3-dev liblz4-dev libutf8proc-dev libserf-dev gdb"
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
