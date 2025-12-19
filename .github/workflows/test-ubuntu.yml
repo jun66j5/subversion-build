@@ -223,7 +223,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
-        java-version: ['21', '17', '16', '11', '8']
+        java-version: ['25', '21', '17', '16', '11', '8']
 
     env:
       MATRIX_OS: ${{ matrix.os }}
