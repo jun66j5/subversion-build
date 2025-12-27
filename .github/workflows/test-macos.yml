@@ -94,7 +94,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.os) }}
-        ruby-version: ['4.0.0-preview2', '3.5', '3.4', '3.3']
+        ruby-version: ['4.0', '3.5', '3.4', '3.3']
 
     env:
       MATRIX_OS: ${{ matrix.os }}
