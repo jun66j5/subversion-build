@@ -14,6 +14,7 @@ env:
   SWIG_VER: ${{ fromJson(inputs.dependencies).swig }}
   JUNIT_VER: ${{ fromJson(inputs.dependencies).junit }}
   PYTHONUTF8: '1'
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-archives
 
 jobs:
 
@@ -62,15 +63,13 @@ jobs:
     - name: Restore cached vcpkg files
       uses: actions/cache/restore@v4
       with:
-        path: |
-          ~\AppData\Local\vcpkg\archives
-          ~\AppData\Local\vcpkg\downloads
+        path: vcpkg-archives
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Cache dependencies
       uses: actions/cache@v4
       with:
-        path: ~\AppData\Local\deps
+        path: deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Add msbuild to PATH
@@ -92,7 +91,7 @@ jobs:
       if: always()
       with:
         name: dist-${{ matrix.os }}-core
-        path: ~\AppData\Local\dist
+        path: dist
 
 
   bindings:
@@ -167,15 +166,13 @@ jobs:
     - name: Restore cached vcpkg files
       uses: actions/cache/restore@v4
       with:
-        path: |
-          ~\AppData\Local\vcpkg\archives
-          ~\AppData\Local\vcpkg\downloads
+        path: vcpkg-archives
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Cache dependencies
       uses: actions/cache@v4
       with:
-        path: ~\AppData\Local\deps
+        path: deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up Python ${{ matrix.python-version }}
@@ -231,7 +228,7 @@ jobs:
       if: always()
       with:
         name: dist-${{ matrix.os }}-bindings
-        path: ~\AppData\Local\dist
+        path: dist
 
 
   prepare:
@@ -273,12 +270,10 @@ jobs:
         enableCrossOsArchive: true
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
-    - name: Cache vcpkg files
-      uses: actions/cache@v4
+    - name: Restore cached vcpkg files
+      uses: actions/cache/restore@v4
       with:
-        path: |
-          ~\AppData\Local\vcpkg\archives
-          ~\AppData\Local\vcpkg\downloads
+        path: vcpkg-archives
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
         restore-keys: |
           ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -287,7 +282,7 @@ jobs:
     - name: Cache dependencies
       uses: actions/cache@v4
       with:
-        path: ~\AppData\Local\deps
+        path: deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up Python 3
@@ -324,6 +319,13 @@ jobs:
         path: deps/serf
 
     - run: .\build.ps1 prepare
+
+    - name: Save vcpkg files to cache
+      uses: actions/cache/save@v4
+      if: always()
+      with:
+        path: vcpkg-archives
+        key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Upload log files
       uses: actions/upload-artifact@v4

@@ -11,7 +11,8 @@ $vcpkg_root = $Env:VCPKG_INSTALLATION_ROOT
 $vcpkg_triplet = "$arch-windows-release"
 $vcpkg_dir = "$vcpkg_root\installed\$vcpkg_triplet"
 $vcpkg_dir_static = "$vcpkg_root\installed\$arch-windows-static"
-$deps_prefix = "$LocalAppData\deps"
+$dist_dir = "$workspace\dist"
+$deps_dir = "$workspace\deps"
 $swig_arc = "$workspace\arc\swigwin-$swig_ver.zip"
 $java_home = $Env:JAVA_HOME
 $junit_file = "$workspace\arc\junit-$junit_ver.jar"
@@ -86,6 +87,7 @@ Copy-Item -LiteralPath "triplets\$arch-windows.cmake" `
 Add-Content -LiteralPath "triplets\$vcpkg_triplet.cmake" `
             -Value 'set(VCPKG_BUILD_TYPE release)'
 Pop-Location
+New-Item -ItemType Directory -Path $env:VCPKG_DEFAULT_BINARY_CACHE
 $vcpkg_opts = @("--triplet=$vcpkg_triplet")
 $vcpkg_targets = Get-Content -LiteralPath "$workspace\vcpkg.txt"
 & vcpkg $vcpkg_opts install $vcpkg_targets
@@ -97,8 +99,8 @@ Write-Output '::endgroup::'
 
 switch -Exact ($args[0]) {
     'prepare' {
-        New-Item -Force -ItemType Directory -Path $deps_prefix
-        $cmake_prefix = $deps_prefix.Replace('\', '/')
+        New-Item -Force -ItemType Directory -Path $deps_dir
+        $cmake_prefix = $deps_dir.Replace('\', '/')
         $cmake_vcpkg_dir = $vcpkg_dir.Replace('\', '/')
         $cmake_build_flags = @(
             '--build', '.', '--config', 'Release', '--parallel',
@@ -144,9 +146,9 @@ switch -Exact ($args[0]) {
         if ($LASTEXITCODE) {
             exit $LASTEXITCODE
         }
-        Copy-Item -Path "$vcpkg_dir\include\expat.h" -Destination "$deps_prefix\include"
-        Copy-Item -Path "$vcpkg_dir\lib\libexpat.lib" -Destination "$deps_prefix\lib"
-        Copy-Item -Path "$vcpkg_dir\bin\libexpat.dll" -Destination "$deps_prefix\bin"
+        Copy-Item -Path "$vcpkg_dir\include\expat.h" -Destination "$deps_dir\include"
+        Copy-Item -Path "$vcpkg_dir\lib\libexpat.lib" -Destination "$deps_dir\lib"
+        Copy-Item -Path "$vcpkg_dir\bin\libexpat.dll" -Destination "$deps_dir\bin"
         Pop-Location
         Write-Output '::endgroup::'
         # httpd
@@ -172,10 +174,10 @@ switch -Exact ($args[0]) {
         if ($LASTEXITCODE) {
             exit $LASTEXITCODE
         }
-        Copy-Item -Path "$vcpkg_dir\bin\libcrypto-*.dll" -Destination "$deps_prefix\bin"
-        Copy-Item -Path "$vcpkg_dir\bin\libssl-*.dll" -Destination "$deps_prefix\bin"
-        Copy-Item -Path "$vcpkg_dir\bin\pcre.dll" -Destination "$deps_prefix\bin"
-        Copy-Item -Path "$vcpkg_dir\bin\zlib1.dll" -Destination "$deps_prefix\bin"
+        Copy-Item -Path "$vcpkg_dir\bin\libcrypto-*.dll" -Destination "$deps_dir\bin"
+        Copy-Item -Path "$vcpkg_dir\bin\libssl-*.dll" -Destination "$deps_dir\bin"
+        Copy-Item -Path "$vcpkg_dir\bin\pcre.dll" -Destination "$deps_dir\bin"
+        Copy-Item -Path "$vcpkg_dir\bin\zlib1.dll" -Destination "$deps_dir\bin"
         Pop-Location
         Write-Output '::endgroup::'
         # serf
@@ -190,10 +192,10 @@ switch -Exact ($args[0]) {
         & $scons SOURCE_LAYOUT=no `
                  APR_STATIC=no `
                  "TARGET_ARCH=$arch" `
-                 "PREFIX=$deps_prefix" `
-                 "LIBDIR=$deps_prefix\lib" `
-                 "APR=$deps_prefix" `
-                 "APU=$deps_prefix" `
+                 "PREFIX=$deps_dir" `
+                 "LIBDIR=$deps_dir\lib" `
+                 "APR=$deps_dir" `
+                 "APU=$deps_dir" `
                  "OPENSSL=$vcpkg_dir" `
                  "ZLIB=$vcpkg_dir"
         if ($LASTEXITCODE) {
@@ -256,18 +258,18 @@ if (!$svnarcurl) {
 # Workaround for expat.h in expat 2.7.2+
 & sed -i -e 's/#define\\>/#\\\\s*define/' build/generator/gen_win_dependencies.py
 
-$Env:PATH = "$deps_prefix\bin;$vcpkg_dir\bin;$vcpkg_dir\tools\gettext\bin;$($Env:PATH)"
+$Env:PATH = "$deps_dir\bin;$vcpkg_dir\bin;$vcpkg_dir\tools\gettext\bin;$($Env:PATH)"
 
 Write-Output '::group::gen-make.py'
 & $python gen-make.py `
           --vsnet-version=2019 `
           --enable-nls `
-          "--with-apr=$deps_prefix" `
-          "--with-apr-util=$deps_prefix" `
-          "--with-httpd=$deps_prefix" `
+          "--with-apr=$deps_dir" `
+          "--with-apr-util=$deps_dir" `
+          "--with-httpd=$deps_dir" `
           "--with-openssl=$vcpkg_dir" `
           "--with-zlib=$vcpkg_dir" `
-          "--with-serf=$deps_prefix" `
+          "--with-serf=$deps_dir" `
           "--with-sqlite=$vcpkg_dir_static" `
           "--with-libintl=$vcpkg_dir" `
           $genmake_opts
@@ -296,10 +298,9 @@ if ($LASTEXITCODE) {
 Write-Output '::endgroup::'
 
 Write-Output '::group::dist'
-$dist_dir = "$LocalAppData\dist"
 New-Item -Path "$dist_dir\bin" -ItemType Directory -Force
-Copy-Item -Path @("$deps_prefix\bin\libapr*.dll",
-                  "$deps_prefix\bin\apr_*.dll",
+Copy-Item -Path @("$deps_dir\bin\libapr*.dll",
+                  "$deps_dir\bin\apr_*.dll",
                   "$vcpkg_dir\bin\libexpat.dll",
                   "$vcpkg_dir\bin\iconv-*.dll",
                   "$vcpkg_dir\bin\intl-*.dll",
@@ -380,7 +381,7 @@ Write-Output '::endgroup::'
 $rc = 0
 foreach ($item in $test_targets) {
     Write-Output "::group::win-tests.py $item"
-    & $python win-tests.py -crv "--httpd-dir=$deps_prefix" --httpd-no-log $item
+    & $python win-tests.py -crv "--httpd-dir=$deps_dir" --httpd-no-log $item
     if ($LASTEXITCODE) {
         Write-Warning "win-tests.py $item exited with $LASTEXITCODE"
         $rc = 1
