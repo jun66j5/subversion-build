@@ -40,11 +40,11 @@ jobs:
         git config --global core.eol lf
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -53,7 +53,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -61,24 +61,24 @@ jobs:
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
     - name: Restore cached vcpkg files
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: vcpkg-archives
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Cache dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v3
 
     - run: .\build.ps1 core
 
     - name: Upload log files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: log-${{ matrix.os }}-core
@@ -87,7 +87,7 @@ jobs:
           subversion\Release\*.log
 
     - name: Upload binary files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: dist-${{ matrix.os }}-core
@@ -123,11 +123,11 @@ jobs:
         git config --global core.eol lf
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -136,7 +136,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -147,7 +147,7 @@ jobs:
       if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
               contains(fromJson(inputs.targets), 'swig-pl') ||
               contains(fromJson(inputs.targets), 'swig-rb') }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -156,7 +156,7 @@ jobs:
 
     - name: Cache junit jar file
       if: ${{ contains(fromJson(inputs.targets), 'javahl') }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -164,20 +164,20 @@ jobs:
         key: arc-junit-${{ fromJson(inputs.dependencies).junit }}
 
     - name: Restore cached vcpkg files
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: vcpkg-archives
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Cache dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up Python ${{ matrix.python-version }}
       if: ${{ contains(fromJson(inputs.targets), 'swig-py') }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -195,17 +195,17 @@ jobs:
 
     - name: Set up Java ${{ matrix.java-version }}
       if: ${{ contains(fromJson(inputs.targets), 'javahl') }}
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: adopt
         java-version: ${{ matrix.java-version }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v3
 
     - name: Checkout py3c
       if: ${{ contains(fromJson(inputs.targets), 'swig-py') }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: encukou/py3c
         ref: ${{ fromJson(inputs.dependencies).py3c }}
@@ -216,7 +216,7 @@ jobs:
         INPUT_TARGETS: ${{ join(fromJson(inputs.targets), ' ') }}
 
     - name: Upload log files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: log-${{ matrix.os }}-bindings
@@ -224,7 +224,7 @@ jobs:
           subversion\*.log
 
     - name: Upload binary files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: dist-${{ matrix.os }}-bindings
@@ -250,11 +250,11 @@ jobs:
         git config --global core.eol lf
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -263,7 +263,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -271,46 +271,46 @@ jobs:
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
     - name: Restore cached vcpkg files
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: vcpkg-archives
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
         restore-keys: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-
 
     - name: Cache dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: deps
         key: ${{ matrix.os }}--deps-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up Python 3
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.x'
 
     - name: Checkout apr
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: apache/apr
         ref: ${{ fromJson(inputs.dependencies).apr }}
         path: deps/apr
 
     - name: Checkout apr-util
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: apache/apr-util
         ref: ${{ fromJson(inputs.dependencies).apr-util }}
         path: deps/apr-util
 
     - name: Checkout httpd
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: apache/httpd
         ref: ${{ fromJson(inputs.dependencies).httpd }}
         path: deps/httpd
 
     - name: Checkout serf
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: apache/serf
         ref: ${{ fromJson(inputs.dependencies).serf }}
@@ -319,14 +319,14 @@ jobs:
     - run: .\build.ps1 prepare
 
     - name: Save vcpkg files to cache
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       if: always()
       with:
         path: vcpkg-archives
         key: ${{ matrix.os }}--vcpkg-${{ hashFiles('vcpkg.txt') }}-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Upload log files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: log-${{ matrix.os }}-prepare-deps
@@ -334,7 +334,7 @@ jobs:
           deps\**\*.log
 
     - name: Upload vcpkg log files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: log-${{ matrix.os }}-prepare-vcpkg
