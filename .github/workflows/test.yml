@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Convert inputs to json outputs
         id: convert
@@ -55,7 +55,7 @@ jobs:
       - name: Cache Subversion archives
         if: ${{ steps.convert.outputs.subversion &&
                 fromJson(steps.convert.outputs.subversion).archive }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: arc
           enableCrossOsArchive: true
@@ -68,7 +68,7 @@ jobs:
         if: ${{ contains(fromJson(steps.convert.outputs.targets), 'swig-pl') ||
                 contains(fromJson(steps.convert.outputs.targets), 'swig-py') ||
                 contains(fromJson(steps.convert.outputs.targets), 'swig-rb') }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: arc
           enableCrossOsArchive: true
@@ -79,7 +79,7 @@ jobs:
 
       - name: Cache junit jar file
         if: ${{ contains(fromJson(steps.convert.outputs.targets), 'javahl') }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: arc
           enableCrossOsArchive: true

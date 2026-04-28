@@ -43,22 +43,22 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -66,7 +66,7 @@ jobs:
         ssh-key: ${{ secrets.SSH_IDENTITY_FILE }}
 
     - name: Checkout py3c
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: encukou/py3c
         ref: ${{ fromJson(inputs.dependencies).py3c }}
@@ -74,7 +74,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -101,7 +101,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -112,11 +112,11 @@ jobs:
         ruby-version: ${{ matrix.ruby-version }}
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -125,7 +125,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -152,7 +152,7 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
@@ -165,11 +165,11 @@ jobs:
     #     perl-version: ${{ matrix.perl-version }}
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -178,7 +178,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -205,23 +205,23 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Set up Java ${{ matrix.java-version }}
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: adopt
         java-version: ${{ matrix.java-version }}
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -230,7 +230,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -238,7 +238,7 @@ jobs:
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
     - name: Cache junit jar file
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -263,17 +263,17 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -282,7 +282,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -290,7 +290,7 @@ jobs:
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
     - name: Checkout serf
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: apache/serf
         ref: ${{ fromJson(inputs.dependencies).serf }}
@@ -299,7 +299,7 @@ jobs:
     - run: ./build.sh all
 
     - name: Upload log files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: log-core-${{ matrix.os }}
@@ -324,17 +324,17 @@ jobs:
 
     steps:
     - name: Cache libraries
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/svn
         key: ${{ matrix.os }}--svn-run${{ github.run_number }}.${{ github.run_attempt }}
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Checkout subversion
       if: ${{ fromJson(inputs.subversion).repository }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ fromJson(inputs.subversion).repository }}
         ref: ${{ fromJson(inputs.subversion).ref }}
@@ -343,7 +343,7 @@ jobs:
 
     - name: Cache Subversion archives
       if: ${{ fromJson(inputs.subversion).archive }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
@@ -351,7 +351,7 @@ jobs:
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
     - name: Checkout serf
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: apache/serf
         ref: ${{ fromJson(inputs.dependencies).serf }}
@@ -361,7 +361,7 @@ jobs:
       if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
               contains(fromJson(inputs.targets), 'swig-pl') ||
               contains(fromJson(inputs.targets), 'swig-rb') }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: arc
         fail-on-cache-miss: true
