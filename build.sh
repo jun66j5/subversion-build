@@ -31,10 +31,12 @@ on_exit() {
         done
         ;;
     macos-*)
-        for i in "$HOME/Library/Logs/DiagnosticReports"/*.crash; do
+        for i in /Library/Logs/DiagnosticReports/*.ips \
+                 "$HOME/Library/Logs/DiagnosticReports"/*.ips
+        do
             test -e "$i" || continue
             echo "::group::$i"
-            cat "$i"
+            viewdiagnostic "$i"
             echo '::endgroup::'
         done
         ;;
