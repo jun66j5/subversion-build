@@ -261,8 +261,15 @@ if (!$svnarcurl) {
 $Env:PATH = "$deps_dir\bin;$vcpkg_dir\bin;$vcpkg_dir\tools\gettext\bin;$($Env:PATH)"
 
 Write-Output '::group::gen-make.py'
+foreach ($vsnet in '2022', '2019') {
+    if (Select-String "vs_version *= *['`"]$vsnet['`"]" `
+            -Quiet -Path build/generator/gen_win_dependencies.py)
+    {
+        break
+    }
+}
 & $python gen-make.py `
-          --vsnet-version=2019 `
+          "--vsnet-version=$vsnet" `
           --enable-nls `
           "--with-apr=$deps_dir" `
           "--with-apr-util=$deps_dir" `
