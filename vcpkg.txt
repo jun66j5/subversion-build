@@ -1,6 +1,6 @@
 zlib
 sqlite3:x64-windows-static
 expat
-pcre
+pcre2
 openssl
 gettext[tools]

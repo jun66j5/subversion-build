@@ -8,7 +8,7 @@ $input_targets = $Env:INPUT_TARGETS -Split ' '
 $arch = 'x64'
 $pythonLocation = $Env:pythonLocation
 $vcpkg_root = $Env:VCPKG_INSTALLATION_ROOT
-$vcpkg_triplet = "$arch-windows-release"
+$vcpkg_triplet = "$arch-windows"
 $vcpkg_dir = "$vcpkg_root\installed\$vcpkg_triplet"
 $vcpkg_dir_static = "$vcpkg_root\installed\$arch-windows-static"
 $dist_dir = "$workspace\dist"
@@ -81,12 +81,6 @@ if ($rc -ne 0) {
 }
 
 Write-Output '::group::vcpkg'
-Push-Location -LiteralPath $vcpkg_root
-Copy-Item -LiteralPath "triplets\$arch-windows.cmake" `
-          -Destination "triplets\$vcpkg_triplet.cmake"
-Add-Content -LiteralPath "triplets\$vcpkg_triplet.cmake" `
-            -Value 'set(VCPKG_BUILD_TYPE release)'
-Pop-Location
 New-Item -Force -ItemType Directory -Path $env:VCPKG_DEFAULT_BINARY_CACHE
 $vcpkg_opts = @("--triplet=$vcpkg_triplet")
 $vcpkg_targets = Get-Content -LiteralPath "$workspace\vcpkg.txt"
@@ -111,8 +105,9 @@ switch -Exact ($args[0]) {
         Write-Output '::group::apr'
         Push-Location "$workspace\deps\apr"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
+                -D "CMAKE_PREFIX_PATH=$cmake_prefix;$cmake_vcpkg_dir" `
                 -D CMAKE_BUILD_TYPE=Release `
-                -D MIN_WINDOWS_VER=0x0600 `
+                -D MIN_WINDOWS_VER=Windows7 `
                 -D APR_HAVE_IPV6=ON `
                 -D APR_INSTALL_PRIVATE_H=ON `
                 -D APR_BUILD_TESTAPR=OFF `
@@ -131,9 +126,7 @@ switch -Exact ($args[0]) {
         Write-Output '::group::apr-util'
         Push-Location "$workspace\deps\apr-util"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
-                -D "OPENSSL_ROOT_DIR=$cmake_vcpkg_dir" `
-                -D "EXPAT_INCLUDE_DIR=$cmake_vcpkg_dir/include" `
-                -D "EXPAT_LIBRARY=$cmake_vcpkg_dir/lib/libexpat.lib" `
+                -D "CMAKE_PREFIX_PATH=$cmake_prefix;$cmake_vcpkg_dir" `
                 -D CMAKE_BUILD_TYPE=Release `
                 -D APU_HAVE_CRYPTO=ON `
                 -D APR_BUILD_TESTAPR=OFF `
@@ -155,13 +148,7 @@ switch -Exact ($args[0]) {
         Write-Output '::group::httpd'
         Push-Location "$workspace\deps\httpd"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
-                -D "APR_INCLUDE_DIR=$cmake_prefix/include" `
-                -D "APR_LIBRARIES=$cmake_prefix/lib/libapr-1.lib;$cmake_prefix/lib/libaprutil-1.lib" `
-                -D "ZLIB_INCLUDE_DIR=$cmake_vcpkg_dir/include" `
-                -D "ZLIB_LIBRARY=$cmake_vcpkg_dir/lib/zlib.lib" `
-                -D "OPENSSL_ROOT_DIR=$cmake_vcpkg_dir" `
-                -D "PCRE_INCLUDE_DIR=$cmake_vcpkg_dir/include" `
-                -D "PCRE_LIBRARIES=$cmake_vcpkg_dir/lib/pcre.lib" `
+                -D "CMAKE_PREFIX_PATH=$cmake_prefix;$cmake_vcpkg_dir" `
                 -D CMAKE_BUILD_TYPE=Release `
                 -D ENABLE_MODULES=i `
                 -D INSTALL_PDB=OFF `
@@ -176,8 +163,8 @@ switch -Exact ($args[0]) {
         }
         Copy-Item -Path "$vcpkg_dir\bin\libcrypto-*.dll" -Destination "$deps_dir\bin"
         Copy-Item -Path "$vcpkg_dir\bin\libssl-*.dll" -Destination "$deps_dir\bin"
-        Copy-Item -Path "$vcpkg_dir\bin\pcre.dll" -Destination "$deps_dir\bin"
-        Copy-Item -Path "$vcpkg_dir\bin\zlib1.dll" -Destination "$deps_dir\bin"
+        Copy-Item -Path "$vcpkg_dir\bin\pcre*.dll" -Destination "$deps_dir\bin"
+        Copy-Item -Path "$vcpkg_dir\bin\z*.dll" -Destination "$deps_dir\bin"
         Pop-Location
         Write-Output '::endgroup::'
         # serf
@@ -187,7 +174,9 @@ switch -Exact ($args[0]) {
         $scons = ($pythonLocation -eq $null) ? 'scons.exe' : "$pythonLocation\scripts\scons.exe"
         # for serf 1.3.x
         & "C:\Program Files\Git\usr\bin\sed.exe" `
-            -i -e "s|'[$]APR/include/apr-1', '[$]APU/include/apr-1'|'`$APR/include', '`$APU/include'|g" `
+            -i `
+            -e "s|'[$]APR/include/apr-1', '[$]APU/include/apr-1'|'`$APR/include', '`$APU/include'|g" `
+            -e 's|zlib\.lib|z.lib|g' `
             SConstruct
         & $scons SOURCE_LAYOUT=no `
                  APR_STATIC=no `
@@ -257,6 +246,11 @@ if (!$svnarcurl) {
 }
 # Workaround for expat.h in expat 2.7.2+
 & sed -i -e 's/#define\\>/#\\\\s*define/' build/generator/gen_win_dependencies.py
+# Workaround for zlib 1.3.2+
+if (-not (Select-String "'z\.lib'" -Quiet -Path build/generator/gen_win_dependencies.py))
+{
+    & sed -i -e "s#'zlib\.lib'#'z.lib'#g" build/generator/gen_win_dependencies.py
+}
 
 $Env:PATH = "$deps_dir\bin;$vcpkg_dir\bin;$vcpkg_dir\tools\gettext\bin;$($Env:PATH)"
 
@@ -313,7 +307,8 @@ Copy-Item -Path @("$deps_dir\bin\libapr*.dll",
                   "$vcpkg_dir\bin\intl-*.dll",
                   "$vcpkg_dir\bin\libcrypto-*.dll",
                   "$vcpkg_dir\bin\libssl-*.dll",
-                  "$vcpkg_dir\bin\zlib1.dll",
+                  "$vcpkg_dir\bin\pcre*.dll",
+                  "$vcpkg_dir\bin\z*.dll",
                   "Release\subversion\libsvn_*\*.dll") `
           -Destination "$dist_dir\bin" `
           -Verbose
