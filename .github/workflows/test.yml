@@ -31,8 +31,8 @@ on:
 
 jobs:
   setup:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
 
     outputs:
       ubuntu: ${{ steps.convert.outputs.ubuntu }}
