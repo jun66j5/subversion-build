@@ -179,6 +179,7 @@ switch -Exact ($args[0]) {
             -i `
             -e "s|'[$]APR/include/apr-1', '[$]APU/include/apr-1'|'`$APR/include', '`$APU/include'|g" `
             -e 's|zlib\.lib|z.lib|g' `
+            -e "s|\<allowed_values=('14\.3'|allowed_values=('14.5', '14.3'|" `
             SConstruct
         & $scons SOURCE_LAYOUT=no `
                  APR_STATIC=no `
