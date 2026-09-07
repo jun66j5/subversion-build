@@ -106,6 +106,7 @@ switch -Exact ($args[0]) {
         Push-Location "$workspace\deps\apr"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
                 -D "CMAKE_PREFIX_PATH=$cmake_prefix;$cmake_vcpkg_dir" `
+                -D CMAKE_POLICY_VERSION_MINIMUM=3.5 `
                 -D CMAKE_BUILD_TYPE=Release `
                 -D MIN_WINDOWS_VER=Windows7 `
                 -D APR_HAVE_IPV6=ON `
@@ -127,6 +128,7 @@ switch -Exact ($args[0]) {
         Push-Location "$workspace\deps\apr-util"
         & cmake -D "CMAKE_INSTALL_PREFIX=$cmake_prefix" `
                 -D "CMAKE_PREFIX_PATH=$cmake_prefix;$cmake_vcpkg_dir" `
+                -D CMAKE_POLICY_VERSION_MINIMUM=3.5 `
                 -D CMAKE_BUILD_TYPE=Release `
                 -D APU_HAVE_CRYPTO=ON `
                 -D APR_BUILD_TESTAPR=OFF `
