@@ -104,8 +104,8 @@ ubuntu-*)
     parallel="$(expr "$(nproc)" '*' 2)"
     ;;
 macos-*)
-    pkgs="autoconf automake libtool apr apr-util sqlite lz4 utf8proc openssl
-          zlib"
+    pkgs="autoconf automake libtool apr apr-util sqlite lz4 utf8proc
+          apache-serf zlib"
     case "$target" in
     swig-py)
         case "$MATRIX_PYVER" in
@@ -128,32 +128,13 @@ macos-*)
     prefix_apu="$(brew --prefix apr-util)"
     with_apr="$prefix_apr/bin/apr-1-config"
     with_apu="$prefix_apu/bin/apu-1-config"
-    with_serf="$prefix"
+    with_serf="$(brew --prefix apache-serf)"
     with_apxs="$(brew --prefix httpd)/bin/apxs"
     with_sqlite="$(brew --prefix sqlite)"
     sqlite_compat_ver="$(/usr/bin/sqlite3 :memory: 'SELECT sqlite_version()')"
     with_lz4="$(brew --prefix lz4)"
     with_utf8proc="$(brew --prefix utf8proc)"
     parallel="$(expr "$(sysctl -n hw.logicalcpu)" '*' 2)"
-    if [ -d "$workspace/serf" ]; then
-        echo '::group::serf'
-        python3 -m venv "$workspace/scons"
-        "$workspace/scons/bin/pip" install scons
-        scons="$workspace/scons/bin/scons"
-        pushd "$workspace/serf"
-        "$scons" -j "$parallel" \
-                 SOURCE_LAYOUT=no \
-                 APR_STATIC=no \
-                 "PREFIX=$prefix" \
-                 "LIBDIR=$prefix/lib" \
-                 "APR=$prefix_apr" \
-                 "APU=$prefix_apu" \
-                 "OPENSSL=$(brew --prefix openssl)" \
-                 "ZLIB=$(brew --prefix zlib)"
-        "$scons" install
-        echo '::endgroup::'
-        popd
-    fi
     ;;
 *)
     echo "Unsupported $MATRIX_OS" 1>&2

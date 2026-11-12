@@ -289,13 +289,6 @@ jobs:
         enableCrossOsArchive: true
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
 
-    - name: Checkout serf
-      uses: actions/checkout@v6
-      with:
-        repository: apache/serf
-        ref: ${{ fromJson(inputs.dependencies).serf }}
-        path: serf
-
     - run: ./build.sh all
 
     - name: Upload log files
@@ -349,13 +342,6 @@ jobs:
         fail-on-cache-miss: true
         enableCrossOsArchive: true
         key: arc-svn-${{ fromJson(inputs.subversion).archive }}
-
-    - name: Checkout serf
-      uses: actions/checkout@v6
-      with:
-        repository: apache/serf
-        ref: ${{ fromJson(inputs.dependencies).serf }}
-        path: serf
 
     - name: Cache SWIG archives
       if: ${{ contains(fromJson(inputs.targets), 'swig-py') ||
